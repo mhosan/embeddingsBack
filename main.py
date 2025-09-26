@@ -1,9 +1,17 @@
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+from typing import Optional, List
 
 app = FastAPI()
 app.title = "Mi app con FastAPI"
 app.version = "0.0.1"
+
+class Contact(BaseModel):
+    id: int
+    nombre: str
+    email: str
+    instagram: Optional[str] = None
 
 contactos = [
     {"id": 1, "nombre": "Juan", "email": "juan@example.com"},
@@ -58,25 +66,25 @@ def getContactByName(name: str):
     return []
 
 @app.post('/contact', tags=['Contact'])
-def addContact(id: int = Body(), nombre: str = Body(), email: str = Body()):
+def addContact(contact: Contact):
     """ 
     Post con parametro de body (payload).
     Añade un contacto.
     """
-    contact = {"id": id, "nombre": nombre, "email": email}  
     contactos.append(contact)
     return contactos
 
 @app.put('/contact/{id}', tags=['Contact'])
-def updateContact(id: int, nombre: str = Body(), email: str = Body()):
+def updateContact(id: int, contact: Contact):
     """ 
     Put con parametro de path y body (payload).
     Actualiza un contacto por su ID.
     """
     for item in contactos:
         if item["id"] == id:
-            item["nombre"] = nombre
-            item["email"] = email
+            item["nombre"] = contact.nombre
+            item["email"] = contact.email
+            item["instagram"] = contact.instagram
             return contactos
 
 
