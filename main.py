@@ -1,6 +1,6 @@
 import logging
 from fastapi import FastAPI, HTTPException, logger, Path, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from typing import List
 import os
 import aiohttp
@@ -48,7 +48,7 @@ def getAllContact():
     Get sin parametros pero a la ruta /contact.
     Devuelve todos los contactos.
     """
-    return (contactos)
+    return JSONResponse(content=contactos, status_code=200)
 
 
 @app.get('/contact/{id}', tags=['Contact']) 
@@ -60,8 +60,8 @@ def getContact(id: int = Path(ge=1, le=1000)):
     """
     for item in contactos:
         if item["id"] == id:
-            return item
-    return []
+            return JSONResponse(content=item, status_code=200)
+    return JSONResponse(content=[], status_code=404)
 
 
 @app.get('/contact/', tags=['Contact'])  
@@ -85,7 +85,7 @@ def addContact(contact: Contact):
     Añade un contacto.
     """
     contactos.append(contact)
-    return contactos
+    return JSONResponse(content={"message": "Contacto añadido correctamente", "contact": contact}, status_code=201)
 
 
 @app.put('/contact/{id}', tags=['Contact'])
@@ -99,7 +99,7 @@ def updateContact(id: int, contact: Contact):
             item["nombre"] = contact.nombre
             item["email"] = contact.email
             item["instagram"] = contact.instagram
-            return contactos
+            return JSONResponse(content={"message": "Contacto añadido correctamente", "contact": contact}, status_code=201)
 
 
 @app.delete('/contact/{id}', tags=['Contact'])
@@ -111,7 +111,7 @@ def deleteContact(id: int):
     for item in contactos:
         if item["id"] == id:
             contactos.remove(item)
-            return contactos
+            return JSONResponse(content={"message": "Contacto eliminado correctamente", "contact": item}, status_code=200)
 
 
 ## ====================================================================
