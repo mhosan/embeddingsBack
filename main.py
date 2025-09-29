@@ -1,10 +1,6 @@
 import logging
 from fastapi import FastAPI, HTTPException, logger, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse
-from typing import List
-import os
-import aiohttp
-import asyncio
 from schemas import Contact, TextRequest, EmbeddingResponse
 
 # ============================================
@@ -114,78 +110,7 @@ def deleteContact(id: int):
             return JSONResponse(content={"message": "Contacto eliminado correctamente", "contact": item}, status_code=200)
 
 
-## ====================================================================
-## ====================================================================
-# Inicializar cliente de Hugging Face
-# Configuración
-# HF_API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/paraphrase-MiniLM-L6-v2"
-HF_API_URL = "https://api-inference.huggingface.co/models/BAAI/bge-small-en-v1.5"
-HF_TOKEN = os.getenv("HF_TOKEN")  
-if not HF_TOKEN:
-    app_logger.error("HF_TOKEN environment variable is not set!")
-    raise ValueError("HF_TOKEN environment variable is required")
-app_logger.info(f"HF Token loaded: {HF_TOKEN[:10]}..." if HF_TOKEN else "No token")
-
-
-async def get_embeddings_from_hf(texts: List[str]) -> List[List[float]]:  #esto usa aiohttp y no necesita huggingface_hub
-    headers = {
-        "Authorization": f"Bearer {HF_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "inputs": texts,
-        "options": {
-            "wait_for_model": True, # Espera si el modelo está cargándose
-            "use_cache": True
-        }
-    }
-    
-    app_logger.info(f"Requesting embeddings for {len(texts)} texts")
-    
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(
-                HF_API_URL, 
-                headers=headers, 
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=30)
-            ) as response:
-                
-                app_logger.info(f"HF API response status: {response.status}")
-                
-                if response.status == 200:
-                    result = await response.json()
-                    app_logger.info(f"Successfully got embeddings: {len(result)} embeddings")
-                    return result
-                
-                elif response.status == 503:
-                    error_text = await response.text()
-                    logger.warning(f"Model loading (503): {error_text}")
-                    raise HTTPException(
-                        status_code=503, 
-                        detail="Model is loading. Please try again in a few moments."
-                    )
-                
-                else:
-                    error_text = await response.text()
-                    app_logger.error(f"HF API error {response.status}: {error_text}")
-                    raise HTTPException(
-                        status_code=response.status, 
-                        detail=f"HuggingFace API error: {error_text}"
-                    )
-                    
-        except asyncio.TimeoutError:
-            app_logger.error("Timeout connecting to Hugging Face API")
-            raise HTTPException(
-                status_code=504, 
-                detail="Timeout connecting to Hugging Face API"
-            )
-        except Exception as e:
-            app_logger.error(f"Unexpected error: {str(e)}")
-            raise HTTPException(
-                status_code=500, 
-                detail=f"Unexpected error: {str(e)}"
-            )
+from hf_client import get_embeddings_from_hf, HF_API_URL, HF_TOKEN
 
 @app.post("/embeddings", response_model=EmbeddingResponse, tags=['Embeddings'])
 async def create_embeddings(request: TextRequest):
