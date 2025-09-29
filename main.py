@@ -2,6 +2,7 @@ import logging
 from fastapi import FastAPI, HTTPException, logger, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from schemas import Contact, TextRequest, EmbeddingResponse
+from constants import MODEL_NAME, MODEL_DIMENSIONS, MAX_SEQUENCE_LENGTH, MODEL_DESCRIPTION, MODEL_USE_CASE, MODEL_LANGUAGE
 
 # ============================================
 # CARGAR .ENV SI EXISTE (SOLO LOCAL)
@@ -29,14 +30,18 @@ async def model_info():
     Información sobre el modelo de embeddings utilizado
     """
     return {
-        "model_name": "BAAI/bge-small-en-v1.5",
-        "dimensions": 384,
-        "max_sequence_length": 5126,
-        "description": "Sentence embedding model, maps sentences to 384 dimensional dense vectors",
-        "use_case": "Semantic similarity, clustering, semantic search",
-        "language": "English (optimized), but works reasonably with other languages"
+        "model_name": MODEL_NAME,
+        "dimensions": MODEL_DIMENSIONS,
+        "max_sequence_length": MAX_SEQUENCE_LENGTH,
+        "description": MODEL_DESCRIPTION,
+        "use_case": MODEL_USE_CASE,
+        "language": MODEL_LANGUAGE
     }
 
+
+# ============================================
+# Endpoint de info sobre la salud del modelo
+# ============================================
 @app.get("/health", tags=['Embeddings'])
 async def health_check():
     """
@@ -48,7 +53,7 @@ async def health_check():
         
         return {
             "status": "healthy",
-            "model": "BAAI/bge-small-en-v1.5",
+            "model": MODEL_NAME,
             "api_url": HF_API_URL,
             "token_configured": bool(HF_TOKEN),
             "test_embedding_dimensions": len(test_result[0]) if test_result else 0
@@ -61,7 +66,44 @@ async def health_check():
             "token_configured": bool(HF_TOKEN)
         }
 
+# ============================================================
+# Endpoint para generar un embedding a partir de UN solo texto 
+# ============================================================
+@app.post("/embedding", tags=['Embeddings'])
+async def create_single_embedding(text: str):
+    """
+    Crear embedding para UN SOLO TEXTO (endpoint simplificado)
+    - **text**: String para convertir a embedding
+    """
+    try:
+        if not text or not text.strip():
+            raise HTTPException(status_code=400, detail="text cannot be empty")
+        
+        embeddings = await get_embeddings_from_hf([text.strip()])
+        
+        return {
+            "embedding": embeddings[0] if embeddings else [],
+            "text": text.strip(),
+            "count": len(embeddings),
+            "model": MODEL_NAME,
+            "dimensions": len(embeddings[0]) if embeddings else 0
+        }
+        """ return JSONResponse(content={"message": "Embedding created", 
+                                     "model": "BAAI/bge-small-en-v1.5",
+                                     "count": len(embeddings),
+                                     "texto original": text,
+                                     "data": embeddings}, status_code=200)   """
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        app_logger.error(f"Error in create_single_embedding: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
+# =======================================================
+# Endpoint para generar embeddings de una lista de textos
+# =======================================================
 @app.post("/embeddings", response_model=EmbeddingResponse, tags=['Embeddings'])
 async def create_embeddings(request: TextRequest):
     """
@@ -80,8 +122,8 @@ async def create_embeddings(request: TextRequest):
 
         embeddings = await get_embeddings_from_hf(request.texts)
         
-        return JSONResponse(content={"message": "Embeddings created", 
-                                     "model": "BAAI/bge-small-en-v1.5", 
+        return JSONResponse(content={"message": "Embeddings created",
+                                     "model": MODEL_NAME,
                                      "count": len(embeddings),
                                      "texto original": request.texts,
                                      "data": embeddings}, status_code=200)
@@ -93,36 +135,6 @@ async def create_embeddings(request: TextRequest):
         app_logger.error(f"Error in create_embeddings: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@app.post("/embedding", tags=['Embeddings'])
-async def create_single_embedding(text: str):
-    """
-    Crear embedding para UN SOLO TEXTO (endpoint simplificado)
-    - **text**: String para convertir a embedding
-    """
-    try:
-        if not text or not text.strip():
-            raise HTTPException(status_code=400, detail="text cannot be empty")
-        
-        embeddings = await get_embeddings_from_hf([text.strip()])
-        
-        return {
-            "embedding": embeddings[0] if embeddings else [],
-            "text": text.strip(),
-            "count": len(embeddings),
-            "model": "BAAI/bge-small-en-v1.5",
-            "dimensions": len(embeddings[0]) if embeddings else 0
-        }
-        """ return JSONResponse(content={"message": "Embedding created", 
-                                     "model": "BAAI/bge-small-en-v1.5",
-                                     "count": len(embeddings),
-                                     "texto original": text,
-                                     "data": embeddings}, status_code=200)   """
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        app_logger.error(f"Error in create_single_embedding: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 contactos = [

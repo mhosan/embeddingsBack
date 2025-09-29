@@ -4,6 +4,7 @@ import aiohttp
 import asyncio
 from typing import List
 from fastapi import HTTPException, logger
+from constants import MODEL_NAME
 
 # ============================================>
 # CARGAR .ENV SI EXISTE (SOLO LOCAL)
@@ -20,7 +21,7 @@ app_logger = logging.getLogger(__name__)
 # ============================================>
 # Inicializar cliente de Hugging Face
 # ============================================>
-HF_API_URL = "https://api-inference.huggingface.co/models/BAAI/bge-small-en-v1.5"
+HF_API_URL = f"https://api-inference.huggingface.co/models/{MODEL_NAME}"
 HF_TOKEN = os.getenv("HF_TOKEN")
 if not HF_TOKEN:
     app_logger.error("HF_TOKEN environment variable is not set!")
