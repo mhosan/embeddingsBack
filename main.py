@@ -22,6 +22,25 @@ app.version = "0.1.0"
 from hf_client import get_embeddings_from_hf, HF_API_URL, HF_TOKEN
 
 # ============================================
+# Endpoint raiz
+# ============================================
+@app.get('/', tags=['Home'])
+def message():
+    """ 
+        Get sin parametros a la ruta raiz.
+        Devuelve un mensaje de bienvenida.
+    """
+    return HTMLResponse(content="""
+    <h3 style='text-align: center; 
+    font-family: Arial; 
+    margin-top: 10%;'>
+    Backend FastAPI para generar embeddings con Hugging Face. <br><br>
+    Swagger: .../docs <br>
+    </h3>
+    """, status_code=200)
+ 
+    
+# ============================================
 # Endpoint de información sobre el modelo
 # ============================================
 @app.get("/model-info", tags=['Embeddings'])
