@@ -6,7 +6,7 @@ from typing import Optional, List
 import os
 import aiohttp
 import asyncio
-from huggingface_hub import InferenceClient
+#from huggingface_hub import InferenceClient
 
 # ============================================
 # CARGAR .ENV SI EXISTE (SOLO LOCAL)
@@ -135,9 +135,9 @@ if not HF_TOKEN:
     app_logger.error("HF_TOKEN environment variable is not set!")
     raise ValueError("HF_TOKEN environment variable is required")
 app_logger.info(f"HF Token loaded: {HF_TOKEN[:10]}..." if HF_TOKEN else "No token")
-#client = InferenceClient(token=HF_TOKEN)
 
-async def get_embeddings_from_hf(texts: List[str]) -> List[List[float]]:
+
+async def get_embeddings_from_hf(texts: List[str]) -> List[List[float]]:  #esto usa aiohttp y no necesita huggingface_hub
     headers = {
         "Authorization": f"Bearer {HF_TOKEN}",
         "Content-Type": "application/json"
