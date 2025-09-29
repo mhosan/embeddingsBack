@@ -3,7 +3,6 @@ from fastapi import FastAPI, HTTPException, logger
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Optional, List
-from dotenv import load_dotenv
 import os
 import aiohttp
 import asyncio
