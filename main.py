@@ -193,9 +193,7 @@ async def get_embeddings_from_hf(texts: List[str]) -> List[List[float]]:
 async def create_embeddings(request: TextRequest):
     """
     Crear embeddings para una lista de textos
-    
     - **texts**: Lista de strings para convertir a embeddings
-    
     Retorna embeddings de 384 dimensiones para cada texto.
     """
     try:
@@ -226,7 +224,6 @@ async def create_embeddings(request: TextRequest):
 async def create_single_embedding(text: str):
     """
     Crear embedding para un solo texto (endpoint simplificado)
-    
     - **text**: String para convertir a embedding
     """
     try:
@@ -258,8 +255,8 @@ async def health_check():
         test_result = await get_embeddings_from_hf(["test"])
         
         return {
-            "status": "healthy", 
-            "model": "sentence-transformers/all-MiniLM-L6-v2",
+            "status": "healthy",
+            "model": "BAAI/bge-small-en-v1.5",
             "api_url": HF_API_URL,
             "token_configured": bool(HF_TOKEN),
             "test_embedding_dimensions": len(test_result[0]) if test_result else 0
@@ -279,9 +276,9 @@ async def model_info():
     Información sobre el modelo de embeddings utilizado
     """
     return {
-        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+        "model_name": "BAAI/bge-small-en-v1.5",
         "dimensions": 384,
-        "max_sequence_length": 256,
+        "max_sequence_length": 5126,
         "description": "Sentence embedding model, maps sentences to 384 dimensional dense vectors",
         "use_case": "Semantic similarity, clustering, semantic search",
         "language": "English (optimized), but works reasonably with other languages"
