@@ -1,11 +1,11 @@
 import logging
 from fastapi import FastAPI, HTTPException, logger
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import Optional, List
+from typing import List
 import os
 import aiohttp
 import asyncio
+from schemas import Contact, TextRequest, EmbeddingResponse
 
 # ============================================
 # CARGAR .ENV SI EXISTE (SOLO LOCAL)
@@ -17,25 +17,14 @@ try:
 except ImportError:
     print("✓ Production: Using system environment variables")
 
+
+
 app_logger = logging.getLogger(__name__)
 
 app = FastAPI()
 app.title = "Embeddings con FastAPI"
 app.version = "0.0.1"
 
-class Contact(BaseModel):
-    id: int
-    nombre: str
-    email: str
-    instagram: Optional[str] = None
-    
-class TextRequest(BaseModel):
-    texts: List[str]
-    
-class EmbeddingResponse(BaseModel):
-    embeddings: List[List[float]]
-    model: str
-    
 contactos = [
     {"id": 1, "nombre": "Juan", "email": "juan@example.com"},
     {"id": 2, "nombre": "María", "email": "maria@example.com"},
