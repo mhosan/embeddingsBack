@@ -9,7 +9,16 @@ import aiohttp
 import asyncio
 from huggingface_hub import InferenceClient
 
-load_dotenv()  # Cargar variables de entorno desde .env
+# ============================================
+# CARGAR .ENV SI EXISTE (SOLO LOCAL)
+# ============================================
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("✓ Development: Loaded .env file")
+except ImportError:
+    print("✓ Production: Using system environment variables")
+
 app_logger = logging.getLogger(__name__)
 
 app = FastAPI()
