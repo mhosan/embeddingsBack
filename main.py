@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, HTTPException, logger
+from fastapi import FastAPI, HTTPException, logger, Path, Query
 from fastapi.responses import HTMLResponse
 from typing import List
 import os
@@ -52,10 +52,11 @@ def getAllContact():
 
 
 @app.get('/contact/{id}', tags=['Contact']) 
-def getContact(id: int):
+def getContact(id: int = Path(ge=1, le=1000)):
     """ 
     Get con parametro de path.
     Devuelve un contacto por su ID.
+    Se valida que el ID esté entre 1 y 1000 con Path
     """
     for item in contactos:
         if item["id"] == id:
@@ -64,10 +65,11 @@ def getContact(id: int):
 
 
 @app.get('/contact/', tags=['Contact'])  
-def getContactByName(name: str):        
+def getContactByName(name: str=Query(min_length=3, max_length=50)):
     """ 
     Get con parametro de query.
-    La barra del final es para indicar que se va a recibir un parametro de tipo query
+    La barra del final es para indicar que se va a recibir un parametro de tipo query.
+    Se valida que el nombre tenga entre 3 y 50 caracteres con Query
     Devuelve un contacto por su nombre.
     """
     for item in contactos:
