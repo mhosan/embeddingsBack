@@ -1,19 +1,19 @@
-from sqlalchemy import text
-from database import SessionLocal
+from supabase import create_client
+import os
+from dotenv import load_dotenv
 
-def test_db_connection():
-    print("Intentando conectar a la base de datos...")
-    try:
-        db = SessionLocal()
-        result = db.execute(text("SELECT 1"))
-        print("¡Conexión a la base de datos exitosa!")
-        print("Resultado de 'SELECT 1':", result.fetchone())
-    except Exception as e:
-        print("Error al conectar a la base de datos:", e)
-    finally:
-        if 'db' in locals() and db:
-            db.close()
-            print("Conexión cerrada.")
+load_dotenv()
 
-if __name__ == "__main__":
-    test_db_connection() 
+# Conectar
+supabase = create_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_KEY")
+)
+
+# Probar con una consulta simple
+try:
+    response = supabase.table('documents').select("*").limit(1).execute()
+    print("✅ Conexión exitosa")
+    print(f"Datos obtenidos: {response.data}")
+except Exception as e:
+    print(f"❌ Error: {e}")

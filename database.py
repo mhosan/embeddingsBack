@@ -1,11 +1,15 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+# config.py
+import os
+from dotenv import load_dotenv
+from supabase import create_client, Client
 
-from config import settings
+# Cargar variables de entorno
+load_dotenv()
 
-engine = create_engine(settings.DATABASE_URL)
+# Crear cliente (se ejecuta una sola vez al importar)
+supabase: Client = create_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_KEY")
+)
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
+print("✅ Conexión exitosa a Supabase")
