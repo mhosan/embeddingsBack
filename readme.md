@@ -20,10 +20,14 @@ Dependencia externa: Requiere conexión a internet
 - Tener control total del modelo
 - Se cuenta con un servidor con suficiente RAM
 
-ejecutar con  uvicorn main:app --reload --port 5000 --host 0.0.0.0
+**ejecutar con  uvicorn main:app --reload --port 5000 --host 0.0.0.0**
 
 Para ejecutar:
 uvicorn main:app --reload --port 5000 --host 0.0.0.0
+
+pip freeze > requirements.txt    
+
+pip install -r requirements.txt
 
 Para probar embeddings:
 curl -X POST "http://localhost:5000/embeddings" \
@@ -53,7 +57,6 @@ Para deployment (Render, Railway, etc.):
 
 Asegúrate de configurar la variable HF_TOKEN en el dashboard
 El requirements.txt debe tener todas las dependencias
-
 
 Para mejorar, podrías:
 
