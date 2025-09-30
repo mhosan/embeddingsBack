@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException, logger, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from schemas import Contact, TextRequest, EmbeddingResponse
 from constants import MODEL_NAME, MODEL_DIMENSIONS, MAX_SEQUENCE_LENGTH, MODEL_DESCRIPTION, MODEL_USE_CASE, MODEL_LANGUAGE
+from database import supabase
 
 # ============================================
 # CARGAR .ENV SI EXISTE (SOLO LOCAL)
@@ -200,12 +201,15 @@ def getContactByName(name: str=Query(min_length=3, max_length=50)):
 
 @app.post('/contact', tags=['Contactos -test-'])
 def addContact(contact: Contact):
-    """ 
-    Post con parametro de body (payload).
-    Añade un contacto.
     """
-    contactos.append(contact)
-    return JSONResponse(content={"message": "Contacto añadido correctamente", "contact": contact}, status_code=201)
+    Post con parametro de body (payload).
+    Añade un contacto a la base de datos.
+    """
+    try:
+        response = supabase.table('contacts').insert(contact.dict()).execute()
+        return JSONResponse(content={"message": "Contacto añadido correctamente", "contact": response.data[0]}, status_code=201)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar contacto: {str(e)}")
 
 
 @app.put('/contact/{id}', tags=['Contactos -test-'])
