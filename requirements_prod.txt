@@ -2,3 +2,6 @@ fastapi
 aiohttp
 pydantic
 uvicorn
+supabase
+supabase-auth
+supabase-functions

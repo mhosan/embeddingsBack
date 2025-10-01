@@ -156,47 +156,52 @@ async def create_embeddings(request: TextRequest):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-
-contactos = [
-    {"id": 1, "nombre": "Juan", "email": "juan@example.com"},
-    {"id": 2, "nombre": "María", "email": "maria@example.com"},
-    {"id": 3, "nombre": "Pedro", "email": "pedro@example.com"}
-]
-
-@app.get('/contact', tags=['Contactos -test-']) 
+@app.get('/contact', tags=['Contactos -test-'])
 def getAllContact():
-    """ 
+    """
     Get sin parametros pero a la ruta /contact.
     Devuelve todos los contactos.
     """
-    return JSONResponse(content=contactos, status_code=200)
+    try:
+        response = supabase.table('contacts').select('*').execute()
+        return JSONResponse(content=response.data, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener contactos: {str(e)}")
 
 
-@app.get('/contact/{id}', tags=['Contactos -test-']) 
+@app.get('/contact/{id}', tags=['Contactos -test-'])
 def getContact(id: int = Path(ge=1, le=1000)):
-    """ 
+    """
     Get con parametro de path.
     Devuelve un contacto por su ID.
     Se valida que el ID esté entre 1 y 1000 con Path
     """
-    for item in contactos:
-        if item["id"] == id:
-            return JSONResponse(content=item, status_code=200)
-    return JSONResponse(content=[], status_code=404)
+    try:
+        response = supabase.table('contacts').select('*').eq('id', id).execute()
+        if response.data:
+            return JSONResponse(content=response.data[0], status_code=200)
+        else:
+            return JSONResponse(content={"message": "Contacto no encontrado"}, status_code=404)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener contacto: {str(e)}")
 
 
-@app.get('/contact/', tags=['Contactos -test-'])  
+@app.get('/contact/', tags=['Contactos -test-'])
 def getContactByName(name: str=Query(min_length=3, max_length=50)):
-    """ 
+    """
     Get con parametro de query.
     La barra del final es para indicar que se va a recibir un parametro de tipo query.
     Se valida que el nombre tenga entre 3 y 50 caracteres con Query
     Devuelve un contacto por su nombre.
     """
-    for item in contactos:
-        if item["nombre"] == name:
-            return item
-    return []
+    try:
+        response = supabase.table('contacts').select('*').eq('nombre', name).execute()
+        if response.data:
+            return JSONResponse(content=response.data[0], status_code=200)
+        else:
+            return JSONResponse(content=[], status_code=404)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener contacto: {str(e)}")
 
 
 @app.post('/contact', tags=['Contactos -test-'])
@@ -214,28 +219,35 @@ def addContact(contact: Contact):
 
 @app.put('/contact/{id}', tags=['Contactos -test-'])
 def updateContact(id: int, contact: Contact):
-    """ 
+    """
     Put con parametro de path y body (payload).
     Actualiza un contacto por su ID.
     """
-    for item in contactos:
-        if item["id"] == id:
-            item["nombre"] = contact.nombre
-            item["email"] = contact.email
-            item["instagram"] = contact.instagram
-            return JSONResponse(content={"message": "Contacto añadido correctamente", "contact": contact}, status_code=201)
+    try:
+        update_data = {k: v for k, v in contact.dict().items() if k != 'id'}
+        response = supabase.table('contacts').update(update_data).eq('id', id).execute()
+        if response.data:
+            return JSONResponse(content={"message": "Contacto actualizado correctamente", "contact": response.data[0]}, status_code=200)
+        else:
+            return JSONResponse(content={"message": "Contacto no encontrado"}, status_code=404)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al actualizar contacto: {str(e)}")
 
 
 @app.delete('/contact/{id}', tags=['Contactos -test-'])
 def deleteContact(id: int):
-    """ 
+    """
     Delete con parametro de path.
     Elimina un contacto por su ID.
     """
-    for item in contactos:
-        if item["id"] == id:
-            contactos.remove(item)
-            return JSONResponse(content={"message": "Contacto eliminado correctamente", "contact": item}, status_code=200)
+    try:
+        response = supabase.table('contacts').delete().eq('id', id).execute()
+        if response.data:
+            return JSONResponse(content={"message": "Contacto eliminado correctamente", "contact": response.data[0]}, status_code=200)
+        else:
+            return JSONResponse(content={"message": "Contacto no encontrado"}, status_code=404)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al eliminar contacto: {str(e)}")
 
 
 if __name__ == "__main__":
