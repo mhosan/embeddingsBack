@@ -109,7 +109,8 @@ async def create_single_embedding(text: str):
             metadata={"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
         )
         try:
-            response = supabase.table('documents').insert(record.dict()).execute()
+            data_to_insert = record.dict(exclude={'id', 'source', 'created_at'})
+            response = supabase.table('documents').insert(data_to_insert).execute()
             document_id = response.data[0]['id']
         except Exception as e:
             app_logger.error(f"Error saving to Supabase: {str(e)}")
@@ -166,7 +167,8 @@ async def create_embeddings(request: TextRequest):
                 metadata={"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
             )
             try:
-                response = supabase.table('documents').insert(record.dict()).execute()
+                data_to_insert = record.dict(exclude={'id', 'source', 'created_at'})
+                response = supabase.table('documents').insert(data_to_insert).execute()
                 document_ids.append(response.data[0]['id'])
             except Exception as e:
                 app_logger.error(f"Error saving document {i} to Supabase: {str(e)}")

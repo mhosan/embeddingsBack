@@ -46,7 +46,7 @@ class DocumentRecord(BaseModel):
     created_at: Optional[datetime] = Field(None, description="Fecha de creación (UTC)")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": 123,
                 "content": "Este es el texto a indexar.",
