@@ -28,7 +28,9 @@ if not HF_TOKEN:
     raise ValueError("HF_TOKEN environment variable is required")
 app_logger.info(f"HF Token loaded: {HF_TOKEN[:10]}..." if HF_TOKEN else "No token")
 
-
+# ============================================>
+# generar el embedding
+# ============================================>
 async def get_embeddings_from_hf(texts: List[str]) -> List[List[float]]:  #esto usa aiohttp y no necesita huggingface_hub
     headers = {
         "Authorization": f"Bearer {HF_TOKEN}",

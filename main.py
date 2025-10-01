@@ -1,9 +1,10 @@
 import logging
 from fastapi import FastAPI, HTTPException, logger, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse
-from schemas import Contact, TextRequest, EmbeddingResponse
+from schemas import Contact, TextRequest, EmbeddingResponse, DocumentRecord
 from constants import MODEL_NAME, MODEL_DIMENSIONS, MAX_SEQUENCE_LENGTH, MODEL_DESCRIPTION, MODEL_USE_CASE, MODEL_LANGUAGE
 from database import supabase
+from datetime import datetime
 
 # ============================================
 # CARGAR .ENV SI EXISTE (SOLO LOCAL)
@@ -97,16 +98,30 @@ async def create_single_embedding(text: str):
     """
     try:
         if not text or not text.strip():
-            raise HTTPException(status_code=400, detail="text cannot be empty")
+            raise HTTPException(status_code=400, detail="El texto no puede estar vacío")
         
         embeddings = await get_embeddings_from_hf([text.strip()])
-        
+
+        # Guardar en Supabase
+        record = DocumentRecord(
+            content=text.strip(),
+            embedding=embeddings[0],
+            metadata={"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
+        )
+        try:
+            response = supabase.table('documents').insert(record.dict()).execute()
+            document_id = response.data[0]['id']
+        except Exception as e:
+            app_logger.error(f"Error saving to Supabase: {str(e)}")
+            raise HTTPException(status_code=500, detail="Failed to save document")
+
         return {
             "embedding": embeddings[0] if embeddings else [],
             "text": text.strip(),
             "count": len(embeddings),
             "model": MODEL_NAME,
-            "dimensions": len(embeddings[0]) if embeddings else 0
+            "dimensions": len(embeddings[0]) if embeddings else 0,
+            "document_id": document_id
         }
         """ return JSONResponse(content={"message": "Embedding created", 
                                      "model": "BAAI/bge-small-en-v1.5",
@@ -133,7 +148,7 @@ async def create_embeddings(request: TextRequest):
     """
     try:
         if not request.texts:
-            raise HTTPException(status_code=400, detail="texts list cannot be empty")
+            raise HTTPException(status_code=400, detail="La lista de textos no puede estar vacia")
         
         if len(request.texts) > 50:  # Límite razonable
             raise HTTPException(status_code=400, detail="Maximum 50 texts allowed per request")
@@ -141,12 +156,28 @@ async def create_embeddings(request: TextRequest):
         app_logger.info(f"Processing {len(request.texts)} texts for embeddings")
 
         embeddings = await get_embeddings_from_hf(request.texts)
-        
+
+        # Guardar en Supabase
+        document_ids = []
+        for i, emb in enumerate(embeddings):
+            record = DocumentRecord(
+                content=request.texts[i],
+                embedding=emb,
+                metadata={"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
+            )
+            try:
+                response = supabase.table('documents').insert(record.dict()).execute()
+                document_ids.append(response.data[0]['id'])
+            except Exception as e:
+                app_logger.error(f"Error saving document {i} to Supabase: {str(e)}")
+                document_ids.append(None)  # O manejar de otra forma
+
         return JSONResponse(content={"message": "Embeddings created",
                                      "model": MODEL_NAME,
                                      "count": len(embeddings),
                                      "texto original": request.texts,
-                                     "data": embeddings}, status_code=200)
+                                     "data": embeddings,
+                                     "document_ids": document_ids}, status_code=200)
         
     except HTTPException:
         # Re-raise HTTP exceptions as-is
