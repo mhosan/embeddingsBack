@@ -12,7 +12,7 @@ from constants import MODEL_NAME
 try:
     from dotenv import load_dotenv
     load_dotenv()
-    print("✓ Development: Loaded .env file")
+    print("Development: Loaded .env file")
 except ImportError:
     print("✓ Production: Using system environment variables")
 

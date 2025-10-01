@@ -12,4 +12,4 @@ supabase: Client = create_client(
     os.getenv("SUPABASE_KEY")
 )
 
-print("✅ Conexión exitosa a Supabase")
+print("Conexion exitosa a Supabase")
