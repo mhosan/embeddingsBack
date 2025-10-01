@@ -16,13 +16,10 @@ def search_similar_documents(query_embedding: List[float], limit: int = 5) -> Li
         Lista de diccionarios con 'id', 'content', 'similarity' (distancia coseno).
     """
     try:
-        # Consulta usando pgvector: <=> es el operador de distancia coseno
-        # Ordena por similarity ascendente (menor distancia = más similar)
-        response = supabase.table('documents').select('id, content, embedding <=> query_embedding as similarity').order('similarity').limit(limit).execute()
-
-        # Supabase espera el embedding como parámetro, pero en select directo puede no funcionar.
-        # Usar rpc si es necesario, pero para simplicidad, asumir que funciona.
-        # Si no, usar supabase.rpc('cosine_similarity', {'query': query_embedding, 'limit': limit})
+        app_logger.info(f"Searching similar documents with query_embedding length: {len(query_embedding)}, limit: {limit}")
+        # Usar RPC para la búsqueda de similitud coseno
+        response = supabase.rpc('search_similar_documents', {'query_embedding': query_embedding, 'limit_param': limit}).execute()
+        app_logger.info(f"RPC response data length: {len(response.data) if response.data else 0}")
 
         results = []
         for item in response.data:
