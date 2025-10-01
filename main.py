@@ -22,6 +22,7 @@ app.title = "Embeddings con FastAPI"
 app.version = "0.1.2"
 
 from hf_client import get_embeddings_from_hf, HF_API_URL, HF_TOKEN
+from search_service import search_similar_documents
 
 # ============================================
 # Endpoint raiz
@@ -187,6 +188,41 @@ async def create_embeddings(request: TextRequest):
     except Exception as e:
         app_logger.error(f"Error in create_embeddings: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# ============================================
+# Endpoint para buscar documentos similares
+# ============================================
+@app.post("/search", tags=['Search'])
+async def search_documents(text: str, limit: int = Query(5, ge=1, le=20)):
+    """
+    Buscar documentos similares en la base de datos usando similitud coseno.
+    - **text**: Texto de consulta para generar embedding y buscar similares
+    - **limit**: Número máximo de resultados (1-20, default 5)
+    """
+    try:
+        if not text or not text.strip():
+            raise HTTPException(status_code=400, detail="El texto no puede estar vacío")
+
+        # Generar embedding del texto de consulta
+        embeddings = await get_embeddings_from_hf([text.strip()])
+
+        # Buscar documentos similares
+        results = search_similar_documents(embeddings[0], limit)
+
+        return {
+            "query_text": text.strip(),
+            "results": results,
+            "model": MODEL_NAME,
+            "limit": limit
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        app_logger.error(f"Error in search_documents: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 
 @app.get('/contact', tags=['Contactos -test-'])
