@@ -19,7 +19,7 @@ except ImportError:
 app_logger = logging.getLogger(__name__)
 app = FastAPI()
 app.title = "Embeddings con FastAPI"
-app.version = "0.1.2"
+app.version = "0.1.3"
 
 from hf_client import get_embeddings_from_hf, HF_API_URL, HF_TOKEN
 from search_service import search_similar_documents
