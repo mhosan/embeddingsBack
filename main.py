@@ -152,7 +152,7 @@ async def create_embeddings(request: TextRequest):
         if not request.texts:
             raise HTTPException(status_code=400, detail="La lista de textos no puede estar vacia")
         
-        if len(request.texts) > 250:  # Límite razonable
+        if len(request.texts) > 2500:  # Límite razonable
             raise HTTPException(status_code=400, detail="Maximum 250 texts allowed per request")
 
         app_logger.info(f"Processing {len(request.texts)} texts for embeddings")
