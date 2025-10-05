@@ -19,7 +19,7 @@ except ImportError:
 app_logger = logging.getLogger(__name__)
 app = FastAPI()
 app.title = "Embeddings con FastAPI"
-app.version = "0.1.4"
+app.version = "0.1.5"
 
 from hf_client import get_embeddings_from_hf, HF_API_URL, HF_TOKEN
 from search_service import search_similar_documents
@@ -152,7 +152,7 @@ async def create_embeddings(request: TextRequest):
         if not request.texts:
             raise HTTPException(status_code=400, detail="La lista de textos no puede estar vacia")
         
-        if len(request.texts) > 250:  # Límite razonable
+        if len(request.texts) > 2500:  # Límite razonable
             raise HTTPException(status_code=400, detail="Maximum 250 texts allowed per request")
 
         app_logger.info(f"Processing {len(request.texts)} texts for embeddings")
