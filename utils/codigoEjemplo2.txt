@@ -1,0 +1,37 @@
+sí puedes usar sentence-transformers directamente. Es la mejor opción en tu caso.
+Configuración recomendada
+Backend FastAPI (Vercel)
+pythonfrom fastapi import FastAPI
+from sentence_transformers import SentenceTransformer
+from typing import List
+import numpy as np
+
+app = FastAPI()
+
+# Cargar el modelo al iniciar (se cachea)
+model = SentenceTransformer('intfloat/multilingual-e5-small')
+
+@app.post("/generate-embedding")
+async def generate_embedding(text: str):
+    """Genera embedding para un texto"""
+    embedding = model.encode(text, normalize_embeddings=True)
+    return {
+        "embedding": embedding.tolist(),
+        "model": "intfloat/multilingual-e5-small",
+        "dimensions": len(embedding)
+    }
+
+@app.post("/generate-embeddings-batch")
+async def generate_embeddings_batch(texts: List[str]):
+    """Genera embeddings para múltiples textos (más eficiente)"""
+    embeddings = model.encode(texts, normalize_embeddings=True)
+    return {
+        "embeddings": embeddings.tolist(),
+        "model": "intfloat/multilingual-e5-small",
+        "count": len(embeddings)
+    }
+Modelos recomendados para español/multilingüe:
+
+intfloat/multilingual-e5-small (384 dims) - Rápido y bueno
+intfloat/multilingual-e5-base (768 dims) - Mejor calidad, más lento
+sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (384 dims)
