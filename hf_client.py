@@ -6,6 +6,14 @@ from typing import List
 from fastapi import HTTPException, logger
 from constants import MODEL_NAME
 
+"""
+La función get_embeddings_from_hf se invoca desde el archivo main.py en varios endpoints de la API FastAPI:
+Endpoint /health: Se usa para verificar la salud del modelo con un texto de prueba simple (["test"]).
+Endpoint /embedding: Para generar un embedding de UN SOLO texto proporcionado por el usuario.
+Endpoint /embeddings: Para generar embeddings de UNA LISTA de textos enviados en la solicitud.
+Endpoint /search: Para generar el embedding del texto de consulta y buscar documentos similares en la base de datos.
+"""
+
 # ============================================>
 # CARGAR .ENV SI EXISTE (SOLO LOCAL)
 # ============================================>
@@ -18,6 +26,7 @@ except ImportError:
 
 app_logger = logging.getLogger(__name__)
 
+
 # ============================================>
 # Inicializar cliente de Hugging Face
 # ============================================>
@@ -27,6 +36,7 @@ if not HF_TOKEN:
     app_logger.error("HF_TOKEN environment variable is not set!")
     raise ValueError("HF_TOKEN environment variable is required")
 app_logger.info(f"HF Token loaded: {HF_TOKEN[:10]}..." if HF_TOKEN else "No token")
+
 
 # ============================================>
 # generar el embedding
