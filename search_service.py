@@ -5,18 +5,15 @@ from database import supabase
 app_logger = logging.getLogger(__name__)
 
 def search_similar_documents(query_embedding: List[float], limit: int = 5) -> List[Dict[str, Any]]:
-    """
+    """ ==========================================================================================
     Busca documentos similares en la tabla 'documents' usando similitud coseno.
-
     Args:
         query_embedding: Vector de embedding para la consulta (lista de floats).
         limit: Número máximo de resultados a retornar (default 5).
-
     Returns:
         Lista de diccionarios con 'id', 'content', 'similarity' (distancia coseno).
-        
         Usa la función RPC 'search_similar_documents' definida en Supabase.
-    """
+    =========================================================================================== """
     try:
         app_logger.info(f"Searching similar documents with query_embedding length: {len(query_embedding)}, limit: {limit}")
         # Usar RPC para la búsqueda de similitud coseno
