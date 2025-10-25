@@ -17,7 +17,28 @@ except ImportError:
     print("✓ Production: Using system environment variables")
 
 app_logger = logging.getLogger(__name__)
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
+# ===========================================
+# CONFIGURAR CORS
+# ===========================================
+origins = [
+    "https://geoofertas.com.ar",
+    "https://udp.com.ar"
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.title = "Embeddings con FastAPI"
 app.version = "0.1.5"
 
