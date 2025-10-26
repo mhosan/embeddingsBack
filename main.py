@@ -26,7 +26,9 @@ app = FastAPI()
 # ===========================================
 origins = [
     "https://geoofertas.com.ar",
-    "https://udp.com.ar"
+    "https://www.geoofertas.com.ar",
+    "https://udp.com.ar",
+    "https://www.udp.com.ar"
     "http://localhost",
     "http://localhost:8080",
 ]
