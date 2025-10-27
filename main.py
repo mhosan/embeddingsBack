@@ -282,6 +282,60 @@ async def documents_info():
         app_logger.error(f"Error fetching documents info: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+# ============================================
+# Endpoint para obtener los n últimos registros de documents
+# ============================================
+from fastapi import Query
+
+@app.get("/documents/latest", tags=['Documents'])
+async def documents_latest(n: int = Query(5, ge=1, le=100)):
+    """
+    Devuelve los n últimos registros de la tabla documents, ordenados por created_at descendente.
+    - n: cantidad de registros a devolver (default 5, máximo 100)
+    """
+    try:
+        resp = supabase.table('documents').select('*').order('created_at', desc=True).limit(n).execute()
+        return {'latest_documents': resp.data}
+    except Exception as e:
+        app_logger.error(f"Error fetching latest documents: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+# ============================================
+# Endpoint para obtener los n primeros registros de documents
+# ============================================
+@app.get("/documents/earliest", tags=['Documents'])
+async def documents_earliest(n: int = Query(5, ge=1, le=100)):
+    """
+    Devuelve los n primeros registros de la tabla documents, ordenados por created_at ascendente.
+    - n: cantidad de registros a devolver (default 5, máximo 100)
+    """
+    try:
+        resp = supabase.table('documents').select('*').order('created_at', desc=False).limit(n).execute()
+        return {'earliest_documents': resp.data}
+    except Exception as e:
+        app_logger.error(f"Error fetching earliest documents: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+# ============================================
+# Endpoint para borrar un registro por id en documents
+# ============================================
+from fastapi import Path
+
+@app.delete("/documents/{id}", tags=['Documents'])
+async def delete_document(id: int = Path(..., description="ID del documento a borrar")):
+    """
+    Elimina un registro de la tabla documents por su id.
+    """
+    try:
+        resp = supabase.table('documents').delete().eq('id', id).execute()
+        if resp.data and len(resp.data) > 0:
+            return {"deleted": True, "id": id}
+        else:
+            raise HTTPException(status_code=404, detail=f"Documento con id {id} no encontrado")
+    except Exception as e:
+        app_logger.error(f"Error deleting document: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn
