@@ -1,0 +1,141 @@
+## INSTRUCCIONES CRÍTICAS - LEER PRIMERO
+- **IMPLEMENTAR ÚNICAMENTE** la funcionalidad solicitada
+- **NO MODIFICAR** código existente que funciona correctamente
+- **NO AGREGAR** validaciones, optimizaciones o mejoras no pedidas
+- **MANTENER** la arquitectura y patrones existentes del proyecto
+- **CONFIRMAR** alcance exacto antes de proceder
+
+## PROCESO DE IMPLEMENTACIÓN
+
+### 1. DEFINICIÓN EXACTA DEL FEATURE
+**Descripción del feature solicitado:**
+Nuevo endpoint de tipo GET que muestre información sobre la tabla
+"documents" de la base de datos.
+[DESCRIPCIÓN DETALLADA DEL FEATURE AQUÍ]
+Se necesita información sobre la tabla documents de la base  de datos.
+Esta tabla guarda embeddings generados a partir de los requerimientos
+del frontend. Se necesita, entre otros datos, la cantidad de registros,
+las fechas de estos registros y otros datos necesarios para un dashboard.
+
+**Especificaciones obligatorias:**
+- [ ] Funcionalidad EXACTA requerida (sin interpretaciones)
+- [ ] Casos de uso específicos a cubrir
+- [ ] Comportamiento esperado definido
+- [ ] Límites claros de lo que NO debe incluir
+
+### 2. ANÁLISIS DE INTEGRACIÓN (Sin modificar código)
+**Evaluación del proyecto actual:**
+- Arquitectura existente a respetar
+- Patrones de código a seguir
+- Dependencias actuales disponibles
+- Puntos de integración específicos
+
+**Restricciones del análisis:**
+- NO sugerir refactoring de código existente
+- NO proponer cambios de arquitectura
+- USAR herramientas y librerías ya presentes
+- MANTENER convenciones de nomenclatura actuales
+
+### 3. INVESTIGACIÓN TÉCNICA DIRIGIDA
+**Documentación oficial de referencia:**
+- DHTMLX Gantt API: https://docs.dhtmlx.com/gantt/api__refs__gantt.html
+- Ejemplos oficiales: https://docs.dhtmlx.com/gantt/samples/
+
+**Validación de implementación:**
+- Buscar ejemplos similares en documentación oficial
+- Verificar compatibilidad con versión actual
+- Confirmar mejores prácticas específicas para esta funcionalidad
+
+### 4. DISEÑO MÍNIMO VIABLE
+**Antes de implementar, DEFINIR:**
+- [ ] Componentes NUEVOS necesarios (mínimos)
+- [ ] Archivos NUEVOS requeridos
+- [ ] Modificaciones MÍNIMAS a archivos existentes
+- [ ] APIs o métodos NUEVOS a crear
+- [ ] Eventos o hooks NUEVOS necesarios
+
+### 5. PLAN DE IMPLEMENTACIÓN INCREMENTAL
+
+#### Fase 1: Estructura Base
+- Crear ÚNICAMENTE archivos/componentes nuevos necesarios
+- Definir interfaces mínimas
+- NO tocar funcionalidad existente
+
+#### Fase 2: Lógica Core
+- Implementar funcionalidad específica solicitada
+- Integrar con puntos definidos en Fase 1
+- Mantener aislamiento del código existente
+
+#### Fase 3: Integración Mínima
+- Conectar nueva funcionalidad con sistema existente
+- ÚNICAMENTE los puntos de conexión necesarios
+- Preservar comportamiento actual
+
+#### Fase 4: Activación
+- Hacer disponible la nueva funcionalidad
+- Sin modificar flujos existentes
+- Mantener retrocompatibilidad total
+
+## RESTRICCIONES ESTRICTAS
+
+### LO QUE NO DEBE INCLUIRSE:
+- ❌ Validaciones adicionales "por seguridad"
+- ❌ Optimizaciones no solicitadas
+- ❌ Refactoring de código existente
+- ❌ Mejoras de UX no pedidas
+- ❌ Logging adicional
+- ❌ Manejo de errores más allá del mínimo
+- ❌ Documentación extensa
+- ❌ Tests unitarios (a menos que se soliciten)
+
+### LO QUE SÍ DEBE INCLUIRSE:
+- ✅ Funcionalidad exacta solicitada
+- ✅ Integración mínima necesaria
+- ✅ Respeto por convenciones existentes
+- ✅ Código limpio y legible
+- ✅ Comentarios solo para lógica compleja nueva
+
+## FORMATO DE RESPUESTA REQUERIDO
+
+### RESUMEN DEL FEATURE
+**Funcionalidad a implementar:** [Una línea específica]
+**Archivos NUEVOS a crear:** [Lista específica]
+**Archivos existentes a MODIFICAR:** [Lista mínima con justificación]
+**Puntos de integración:** [Específicos y mínimos]
+
+### ARQUITECTURA PROPUESTA
+**Componentes nuevos:** [Lista con responsabilidad específica]
+**APIs nuevas:** [Métodos exactos necesarios]
+**Eventos nuevos:** [Si son necesarios]
+**Dependencias adicionales:** [Solo si son imprescindibles]
+
+### PLAN FASEADO DETALLADO
+**Fase 1 - Estructura:** [Archivos a crear, tiempo estimado]
+**Fase 2 - Lógica:** [Funcionalidad core, tiempo estimado]
+**Fase 3 - Integración:** [Conexiones específicas, tiempo estimado]
+**Fase 4 - Activación:** [Disponibilidad, tiempo estimado]
+
+### IMPACTO EN SISTEMA EXISTENTE
+**Código existente afectado:** [Líneas específicas a modificar]
+**Funcionalidades en riesgo:** [Si las hay]
+**Pruebas de regresión necesarias:** [Áreas a verificar]
+
+## VALIDACIONES FINALES PRE-IMPLEMENTACIÓN
+- [ ] ¿La solución es la mínima para cumplir el requisito?
+- [ ] ¿Se respeta la arquitectura existente?
+- [ ] ¿Se validó con documentación oficial?
+- [ ] ¿No agrega funcionalidades extras?
+- [ ] ¿Se mantiene retrocompatibilidad?
+- [ ] ¿El código existente sigue funcionando igual?
+- [ ] ¿El plan es incremental y reversible?
+
+## CRITERIOS DE ACEPTACIÓN
+**El feature estará completo cuando:**
+1. [Criterio específico 1]
+2. [Criterio específico 2]
+3. [Criterio específico 3]
+
+**El feature NO debe:**
+1. Cambiar comportamiento existente
+2. Requerir modificaciones en otros módulos
+3. Introducir dependencias innecesarias

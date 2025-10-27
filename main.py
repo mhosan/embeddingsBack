@@ -247,6 +247,41 @@ async def search_documents(text: str, limit: int = Query(5, ge=1, le=20)):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+# ============================================
+# Endpoint para obtener información de la tabla documents
+# ============================================
+@app.get("/documents/info", tags=['Documents'])
+async def documents_info():
+    """
+    Retorna métricas básicas de la tabla `documents` necesarias para un dashboard:
+    - count: cantidad de registros
+    - earliest_created_at: fecha del registro más antiguo (created_at)
+    - latest_created_at: fecha del registro más reciente (created_at)
+
+    Nota: Implementación mínima usando el cliente `supabase` ya presente en el proyecto.
+    """
+    try:
+        # Obtener cantidad de registros (count exacto)
+        count_resp = supabase.table('documents').select('*', count='exact').limit(1).execute()
+        total_count = getattr(count_resp, 'count', None)
+
+        # Obtener el registro con la fecha más antigua
+        earliest_resp = supabase.table('documents').select('created_at').order('created_at', desc=False).limit(1).execute()
+        earliest = earliest_resp.data[0]['created_at'] if earliest_resp.data else None
+
+        # Obtener el registro con la fecha más reciente
+        latest_resp = supabase.table('documents').select('created_at').order('created_at', desc=True).limit(1).execute()
+        latest = latest_resp.data[0]['created_at'] if latest_resp.data else None
+
+        return {
+            'count': total_count,
+            'earliest_created_at': earliest,
+            'latest_created_at': latest
+        }
+    except Exception as e:
+        app_logger.error(f"Error fetching documents info: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

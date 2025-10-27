@@ -1,0 +1,149 @@
+# Prompt Optimizado para Modificaciones
+
+## INSTRUCCIONES CRÍTICAS - LEER PRIMERO
+- **MODIFICAR ÚNICAMENTE** lo específicamente solicitado
+- **NO TOCAR** funcionalidades relacionadas que funcionen correctamente
+- **NO APROVECHAR** para hacer "mejoras" adicionales
+- **MANTENER** el comportamiento existente en todo lo demás
+- **CONFIRMAR** alcance exacto de la modificación antes de proceder
+
+## PROCESO DE MODIFICACIÓN
+
+### 1. DEFINICIÓN EXACTA DE LA MODIFICACIÓN
+**Cambio solicitado:**
+```
+[DESCRIPCIÓN ESPECÍFICA DE QUÉ MODIFICAR AQUÍ]
+```
+
+**Especificaciones obligatorias:**
+- [ ] Comportamiento ACTUAL a cambiar (específico)
+- [ ] Comportamiento DESEADO (específico)
+- [ ] Elementos que NO deben cambiar
+- [ ] Alcance exacto de la modificación
+
+### 2. MAPEO DE IMPACTO (Sin modificar código)
+**Análisis de componentes afectados:**
+- Código específico que debe cambiar
+- Funcionalidades que podrían verse afectadas
+- Dependencias que usan el código a modificar
+- Puntos de integración que deben preservarse
+
+**Restricciones del análisis:**
+- IDENTIFICAR únicamente lo mínimo necesario
+- NO buscar oportunidades de mejora
+- NO considerar optimizaciones paralelas
+- MANTENER la lógica existente intacta donde sea posible
+
+### 3. INVESTIGACIÓN TÉCNICA ESPECÍFICA
+**Documentación de referencia:**
+- DHTMLX Gantt API: https://docs.dhtmlx.com/gantt/api__refs__gantt.html
+- Ejemplos oficiales: https://docs.dhtmlx.com/gantt/samples/
+
+**Validación de la modificación:**
+- Confirmar que el cambio es técnicamente viable
+- Verificar compatibilidad con versión actual
+- Asegurar que no rompe patrones establecidos
+
+### 4. ESTRATEGIA DE MODIFICACIÓN MÍNIMA
+**Antes de implementar, DEFINIR:**
+- [ ] Líneas específicas de código a modificar
+- [ ] Archivos exactos que requieren cambios
+- [ ] Métodos/funciones que necesitan ajustes
+- [ ] Variables/propiedades a modificar
+- [ ] Lo que debe permanecer SIN CAMBIOS
+
+### 5. PLAN DE IMPLEMENTACIÓN QUIRÚRGICA
+
+#### Fase 1: Localización Exacta
+- Identificar las líneas precisas a modificar
+- Confirmar contexto y dependencias inmediatas
+- Documentar estado actual para rollback
+
+#### Fase 2: Modificación Puntual
+- Cambiar ÚNICAMENTE lo solicitado
+- Mantener estructura y patrones existentes
+- Preservar nombres, formatos y convenciones
+
+#### Fase 3: Verificación de No-Regresión
+- Confirmar que la modificación funciona
+- Verificar que funcionalidades relacionadas siguen igual
+- Asegurar que no se rompió nada más
+
+## RESTRICCIONES ESTRICTAS
+
+### LO QUE NO DEBE HACERSE:
+- ❌ Refactorizar código "mientras estamos ahí"
+- ❌ Cambiar nombres de variables/métodos
+- ❌ Optimizar algoritmos existentes
+- ❌ Mejorar manejo de errores no relacionado
+- ❌ Actualizar dependencias
+- ❌ Cambiar estructuras de datos
+- ❌ Modificar estilos de código
+- ❌ Agregar validaciones extra
+- ❌ Cambiar arquitectura local
+
+### LO QUE SÍ DEBE HACERSE:
+- ✅ Cambio exacto solicitado
+- ✅ Mantener estilo de código existente
+- ✅ Preservar funcionalidad no relacionada
+- ✅ Respetar convenciones actuales
+- ✅ Mantener legibilidad sin refactorizar
+
+## FORMATO DE RESPUESTA REQUERIDO
+
+### RESUMEN DE LA MODIFICACIÓN
+**Cambio específico a realizar:** [Una línea clara]
+**Archivos a modificar:** [Lista exacta]
+**Líneas aproximadas afectadas:** [Número específico]
+**Funcionalidades que permanecen igual:** [Confirmación explícita]
+
+### ANÁLISIS DE IMPACTO
+**Código que cambia:** [Descripción específica]
+**Código que NO cambia:** [Confirmación de lo que se preserva]
+**Dependencias afectadas:** [Si las hay]
+**Tests de regresión necesarios:** [Áreas específicas a verificar]
+
+### PLAN DE MODIFICACIÓN
+**Paso 1:** [Acción específica en archivo X, línea Y]
+**Paso 2:** [Acción específica en archivo Z, línea W]
+**Paso 3:** [Verificación específica]
+
+### IMPLEMENTACIÓN DETALLADA
+**Código actual:**
+```
+[Código que será modificado]
+```
+
+**Código modificado:**
+```
+[Código después del cambio]
+```
+
+**Justificación:** [Por qué este cambio específico cumple el objetivo]
+
+## VALIDACIONES FINALES PRE-MODIFICACIÓN
+- [ ] ¿El cambio es el mínimo necesario?
+- [ ] ¿Se preserva toda la funcionalidad no relacionada?
+- [ ] ¿No se agregaron mejoras no solicitadas?
+- [ ] ¿Se mantienen las convenciones existentes?
+- [ ] ¿El cambio es reversible fácilmente?
+- [ ] ¿No se modificó arquitectura innecesariamente?
+- [ ] ¿La modificación es quirúrgica y precisa?
+
+## CRITERIOS DE ÉXITO
+**La modificación estará completa cuando:**
+1. [Comportamiento específico cambiado según solicitado]
+2. [Todo lo demás sigue funcionando igual]
+3. [No se introdujeron efectos secundarios]
+
+**La modificación NO debe:**
+1. Cambiar comportamiento no solicitado
+2. Requerir ajustes en otros módulos
+3. Romper funcionalidades existentes
+4. Introducir complejidad adicional
+
+## ROLLBACK PLAN
+**En caso de problemas:**
+- Código original documentado: [Ubicación]
+- Pasos para revertir: [Secuencia específica]
+- Puntos de verificación: [Checkpoints para confirmar rollback]

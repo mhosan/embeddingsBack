@@ -1,0 +1,78 @@
+# Prompt Optimizado para Bugfix
+
+## INSTRUCCIONES CRÍTICAS - LEER PRIMERO
+- **NO AGREGAR funcionalidades no solicitadas**
+- **NO MODIFICAR código existente que funciona correctamente**
+- **SOLO resolver el problema específico descrito**
+- **CONFIRMAR comprensión antes de proceder**
+
+## PROCESO DE RESOLUCIÓN
+
+### 1. ANÁLISIS INICIAL (Sin modificar código)
+Analizar el código actual relacionado con el bugfix:
+```
+[DESCRIPCIÓN DEL BUGFIX AQUÍ]
+```
+
+**Restricciones del análisis:**
+- Examinar ÚNICAMENTE el código relacionado con el problema
+- Identificar la causa raíz específica
+- NO sugerir "mejoras" adicionales
+- NO refactorizar código funcional
+
+### 2. INVESTIGACIÓN OBLIGATORIA
+**Documentación oficial de referencia:**
+- DHTMLX Gantt API: https://docs.dhtmlx.com/gantt/api__refs__gantt.html
+- Ejemplos oficiales: https://docs.dhtmlx.com/gantt/samples/
+
+**Validación externa:**
+- Buscar casos similares en StackOverflow
+- Confirmar que la solución propuesta es la práctica estándar
+
+### 3. DIAGNÓSTICO CERTERO
+Antes de proponer solución, CONFIRMAR:
+- [ ] Causa raíz identificada con certeza
+- [ ] Solución validada en documentación oficial
+- [ ] Impacto en funcionalidades existentes evaluado
+- [ ] Solución mínima viable definida
+
+### 4. PLAN DE IMPLEMENTACIÓN
+**Solo después de confirmado el diagnóstico:**
+
+#### Fase 1: Preparación
+- Archivos a modificar (mínimos necesarios)
+- Funcionalidades que NO deben verse afectadas
+- Tests de regresión necesarios
+
+#### Fase 2: Implementación Mínima
+- Cambios específicos requeridos
+- Código exacto a modificar
+- Sin refactoring innecesario
+
+#### Fase 3: Validación
+- Verificar que el bug se resolvió
+- Confirmar que no se rompió funcionalidad existente
+
+## FORMATO DE RESPUESTA REQUERIDO
+
+### DIAGNÓSTICO
+**Causa identificada:** [Una línea específica]
+**Archivos afectados:** [Lista mínima]
+**Funcionalidades en riesgo:** [Si las hay]
+
+### SOLUCIÓN PROPUESTA
+**Cambios mínimos necesarios:** [Descripción concisa]
+**Archivos a modificar:** [Lista específica]
+**Líneas de código aproximadas:** [Estimación]
+
+### PLAN FASEADO
+**Fase 1:** [Acción específica]
+**Fase 2:** [Acción específica]
+**Fase 3:** [Validación]
+
+## VALIDACIONES FINALES
+- [ ] ¿La solución es la mínima posible?
+- [ ] ¿Se validó con documentación oficial?
+- [ ] ¿Se confirmó en fuentes externas?
+- [ ] ¿No agrega funcionalidades extras?
+- [ ] ¿Preserva el código existente funcional?
