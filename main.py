@@ -336,6 +336,21 @@ async def delete_document(id: int = Path(..., description="ID del documento a bo
         app_logger.error(f"Error deleting document: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+# ============================================
+# Endpoint para obtener un rango de registros por id en documents
+# ============================================
+@app.get("/documents/range", tags=['Documents'])
+async def documents_range(start_id: int = Query(..., description="ID inicial"), end_id: int = Query(..., description="ID final")):
+    """
+    Devuelve los registros de la tabla documents cuyo id está entre start_id y end_id (inclusive).
+    """
+    try:
+        resp = supabase.table('documents').select('*').gte('id', start_id).lte('id', end_id).order('id', desc=False).execute()
+        return {'documents_range': resp.data}
+    except Exception as e:
+        app_logger.error(f"Error fetching documents range: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn
