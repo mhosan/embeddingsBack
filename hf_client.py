@@ -1,9 +1,8 @@
 import os
 import logging
-import aiohttp
-import asyncio
 from typing import List
-from fastapi import HTTPException, logger
+from fastapi import HTTPException
+from huggingface_hub import InferenceClient
 from constants import MODEL_NAME
 
 """
@@ -30,73 +29,86 @@ app_logger = logging.getLogger(__name__)
 # ============================================>
 # Inicializar cliente de Hugging Face
 # ============================================>
-HF_API_URL = f"https://api-inference.huggingface.co/models/{MODEL_NAME}"
 HF_TOKEN = os.getenv("HF_TOKEN")
 if not HF_TOKEN:
     app_logger.error("HF_TOKEN environment variable is not set!")
     raise ValueError("HF_TOKEN environment variable is required")
+
 app_logger.info(f"HF Token loaded: {HF_TOKEN[:10]}..." if HF_TOKEN else "No token")
+print(f"✓ HF Token cargado correctamente")
+print(f"✓ Modelo: {MODEL_NAME}")
+
+# Inicializar InferenceClient
+try:
+    client = InferenceClient(api_key=HF_TOKEN)
+    print(f"✓ InferenceClient inicializado correctamente")
+except Exception as e:
+    print(f"✗ Error inicializando InferenceClient: {str(e)}")
+    raise
 
 
 # ============================================>
-# generar el embedding
+# generar el embedding - FUNCIÓN SÍNCRONA
 # ============================================>
-async def get_embeddings_from_hf(texts: List[str]) -> List[List[float]]:  #esto usa aiohttp y no necesita huggingface_hub
-    headers = {
-        "Authorization": f"Bearer {HF_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "inputs": texts,
-        "options": {
-            "wait_for_model": True, # Espera si el modelo está cargándose
-            "use_cache": True
-        }
-    }
+def get_embeddings_from_hf(texts: List[str]) -> List[List[float]]:
+    """
+    Genera embeddings usando InferenceClient.
+    FUNCIÓN SÍNCRONA (no async) para evitar problemas con FastAPI.
     
-    app_logger.info(f"Requesting embeddings for {len(texts)} texts")
+    Args:
+        texts: Lista de strings para convertir a embeddings
+        
+    Returns:
+        Lista de embeddings (cada uno es una lista de floats)
+    """
+    print(f"\n[DEBUG] Requesting embeddings for {len(texts)} texts")
+    print(f"[DEBUG] Model: {MODEL_NAME}")
     
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(
-                HF_API_URL, 
-                headers=headers, 
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=30)
-            ) as response:
-                
-                app_logger.info(f"HF API response status: {response.status}")
-                
-                if response.status == 200:
-                    result = await response.json()
-                    app_logger.info(f"Successfully got embeddings: {len(result)} embeddings")
-                    return result
-                
-                elif response.status == 503:
-                    error_text = await response.text()
-                    logger.warning(f"Model loading (503): {error_text}")
-                    raise HTTPException(
-                        status_code=503, 
-                        detail="Model is loading. Please try again in a few moments."
-                    )
-                
-                else:
-                    error_text = await response.text()
-                    app_logger.error(f"HF API error {response.status}: {error_text}")
-                    raise HTTPException(
-                        status_code=response.status, 
-                        detail=f"HuggingFace API error: {error_text}"
-                    )
-                    
-        except asyncio.TimeoutError:
-            app_logger.error("Timeout connecting to Hugging Face API")
+    app_logger.info(f"Requesting embeddings for {len(texts)} texts to model {MODEL_NAME}")
+    
+    try:
+        print(f"[DEBUG] Llamando a client.feature_extraction()...")
+        
+        # Llamada directa síncrona
+        result = client.feature_extraction(
+            text=texts,
+            model=MODEL_NAME
+        )
+        
+        print(f"[SUCCESS] Got embeddings")
+        print(f"[DEBUG] Result type: {type(result)}")
+        
+        # Convertir resultado a lista si es necesario
+        if hasattr(result, 'tolist'):
+            result = result.tolist()
+        
+        if isinstance(result, list):
+            print(f"[DEBUG] Result length: {len(result)}")
+            if len(result) > 0 and isinstance(result[0], list):
+                print(f"[DEBUG] First embedding length: {len(result[0])}")
+        
+        app_logger.info(f"Successfully got embeddings")
+        
+        return result
+        
+    except Exception as e:
+        error_msg = str(e)
+        print(f"[ERROR] {type(e).__name__}: {error_msg}")
+        
+        app_logger.error(f"Error: {error_msg}")
+        
+        if "503" in error_msg or "loading" in error_msg.lower():
             raise HTTPException(
-                status_code=504, 
+                status_code=503,
+                detail="Model is loading. Please try again in a few moments."
+            )
+        elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+            raise HTTPException(
+                status_code=504,
                 detail="Timeout connecting to Hugging Face API"
             )
-        except Exception as e:
-            app_logger.error(f"Unexpected error: {str(e)}")
+        else:
             raise HTTPException(
-                status_code=500, 
-                detail=f"Unexpected error: {str(e)}"
+                status_code=500,
+                detail=f"Error generating embeddings: {error_msg}"
             )

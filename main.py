@@ -44,7 +44,7 @@ app.add_middleware(
 app.title = "Embeddings con FastAPI"
 app.version = "0.1.9"
 
-from hf_client import get_embeddings_from_hf, HF_API_URL, HF_TOKEN
+from hf_client import get_embeddings_from_hf
 from search_service import search_similar_documents
 
 # ============================================
@@ -88,34 +88,31 @@ async def model_info():
 # Endpoint de info sobre la salud del modelo
 # ============================================
 @app.get("/health", tags=['Embeddings'])
-async def health_check():
+def health_check():
     """
     Verificar el estado de la API y conexión con Hugging Face
     """
     try:
         # Test simple con un texto pequeño
-        test_result = await get_embeddings_from_hf(["test"])
+        test_result = get_embeddings_from_hf(["test"])
         
         return {
             "status": "healthy",
             "model": MODEL_NAME,
-            "api_url": HF_API_URL,
-            "token_configured": bool(HF_TOKEN),
             "test_embedding_dimensions": len(test_result[0]) if test_result else 0
         }
     except Exception as e:
         app_logger.error(f"Health check failed: {str(e)}")
         return {
             "status": "unhealthy",
-            "error": str(e),
-            "token_configured": bool(HF_TOKEN)
+            "error": str(e)
         }
 
 # ============================================================
 # Endpoint para generar un embedding a partir de UN solo texto 
 # ============================================================
 @app.post("/embedding", tags=['Embeddings'])
-async def create_single_embedding(text: str):
+def create_single_embedding(text: str):
     """
     Crear embedding para UN SOLO TEXTO (endpoint simplificado)
     - **text**: String para convertir a embedding
@@ -124,7 +121,7 @@ async def create_single_embedding(text: str):
         if not text or not text.strip():
             raise HTTPException(status_code=400, detail="El texto no puede estar vacío")
         
-        embeddings = await get_embeddings_from_hf([text.strip()])
+        embeddings = get_embeddings_from_hf([text.strip()])
 
         # Guardar en Supabase
         record = DocumentRecord(
@@ -165,7 +162,7 @@ async def create_single_embedding(text: str):
 # Endpoint para generar embeddings de una lista de textos
 # =======================================================
 @app.post("/embeddings", response_model=EmbeddingResponse, tags=['Embeddings'])
-async def create_embeddings(request: TextRequest):
+def create_embeddings(request: TextRequest):
     """
     Crear embeddings para una LISTA de textos
     - **texts**: Lista de strings para convertir a embeddings
@@ -180,7 +177,7 @@ async def create_embeddings(request: TextRequest):
 
         app_logger.info(f"Processing {len(request.texts)} texts for embeddings")
 
-        embeddings = await get_embeddings_from_hf(request.texts)
+        embeddings = get_embeddings_from_hf(request.texts)
 
         # Guardar en Supabase
         document_ids = []
@@ -217,7 +214,7 @@ async def create_embeddings(request: TextRequest):
 # Endpoint para buscar documentos similares
 # ============================================
 @app.post("/search", tags=['Search'])
-async def search_documents(text: str, limit: int = Query(5, ge=1, le=20)):
+def search_documents(text: str, limit: int = Query(5, ge=1, le=20)):
     """
     Buscar documentos similares en la base de datos usando similitud coseno.
     - **text**: Texto de consulta para generar embedding y buscar similares
@@ -228,7 +225,7 @@ async def search_documents(text: str, limit: int = Query(5, ge=1, le=20)):
             raise HTTPException(status_code=400, detail="El texto no puede estar vacío")
 
         # Generar embedding del texto de consulta
-        embeddings = await get_embeddings_from_hf([text.strip()])
+        embeddings = get_embeddings_from_hf([text.strip()])
 
         # Buscar documentos similares
         results = search_similar_documents(embeddings[0], limit)
@@ -251,7 +248,7 @@ async def search_documents(text: str, limit: int = Query(5, ge=1, le=20)):
 # Endpoint para obtener información de la tabla documents
 # ============================================
 @app.get("/documents/info", tags=['Documents'])
-async def documents_info():
+def documents_info():
     """
     Retorna métricas básicas de la tabla `documents` necesarias para un dashboard:
     - count: cantidad de registros
@@ -288,7 +285,7 @@ async def documents_info():
 from fastapi import Query
 
 @app.get("/documents/latest", tags=['Documents'])
-async def documents_latest(n: int = Query(5, ge=1, le=100)):
+def documents_latest(n: int = Query(5, ge=1, le=100)):
     """
     Devuelve los n últimos registros de la tabla documents, ordenados por created_at descendente.
     - n: cantidad de registros a devolver (default 5, máximo 100)
@@ -304,7 +301,7 @@ async def documents_latest(n: int = Query(5, ge=1, le=100)):
 # Endpoint para obtener los n primeros registros de documents
 # ============================================
 @app.get("/documents/earliest", tags=['Documents'])
-async def documents_earliest(n: int = Query(5, ge=1, le=100)):
+def documents_earliest(n: int = Query(5, ge=1, le=100)):
     """
     Devuelve los n primeros registros de la tabla documents, ordenados por created_at ascendente.
     - n: cantidad de registros a devolver (default 5, máximo 100)
@@ -322,7 +319,7 @@ async def documents_earliest(n: int = Query(5, ge=1, le=100)):
 from fastapi import Path
 
 @app.delete("/documents/{id}", tags=['Documents'])
-async def delete_document(id: int = Path(..., description="ID del documento a borrar")):
+def delete_document(id: int = Path(..., description="ID del documento a borrar")):
     """
     Elimina un registro de la tabla documents por su id.
     """
@@ -340,7 +337,7 @@ async def delete_document(id: int = Path(..., description="ID del documento a bo
 # Endpoint para obtener un rango de registros por id en documents
 # ============================================
 @app.get("/documents/range", tags=['Documents'])
-async def documents_range(start_id: int = Query(..., description="ID inicial"), end_id: int = Query(..., description="ID final")):
+def documents_range(start_id: int = Query(..., description="ID inicial"), end_id: int = Query(..., description="ID final")):
     """
     Devuelve los registros de la tabla documents cuyo id está entre start_id y end_id (inclusive).
     """
