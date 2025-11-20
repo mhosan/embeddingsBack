@@ -285,10 +285,10 @@ def documents_info():
 from fastapi import Query
 
 @app.get("/documents/latest", tags=['Documents'])
-def documents_latest(n: int = Query(5, ge=1, le=100)):
+def documents_latest(n: int = Query(5, ge=1)):
     """
     Devuelve los n últimos registros de la tabla documents, ordenados por created_at descendente.
-    - n: cantidad de registros a devolver (default 5, máximo 100)
+    - n: cantidad de registros a devolver (default 5, sin límite máximo)
     """
     try:
         resp = supabase.table('documents').select('*').order('created_at', desc=True).limit(n).execute()
@@ -301,10 +301,10 @@ def documents_latest(n: int = Query(5, ge=1, le=100)):
 # Endpoint para obtener los n primeros registros de documents
 # ============================================
 @app.get("/documents/earliest", tags=['Documents'])
-def documents_earliest(n: int = Query(5, ge=1, le=100)):
+def documents_earliest(n: int = Query(5, ge=1)):
     """
     Devuelve los n primeros registros de la tabla documents, ordenados por created_at ascendente.
-    - n: cantidad de registros a devolver (default 5, máximo 100)
+    - n: cantidad de registros a devolver (default 5, sin límite máximo)
     """
     try:
         resp = supabase.table('documents').select('*').order('created_at', desc=False).limit(n).execute()
@@ -337,13 +337,15 @@ def delete_document(id: int = Path(..., description="ID del documento a borrar")
 # Endpoint para obtener un rango de registros por id en documents
 # ============================================
 @app.get("/documents/range", tags=['Documents'])
-def documents_range(start_id: int = Query(..., description="ID inicial"), end_id: int = Query(..., description="ID final")):
+def documents_range(start_id: int = Query(..., description="ID del registro inicial"), limit: int = Query(..., ge=1, description="Cantidad de registros a recuperar")):
     """
-    Devuelve los registros de la tabla documents cuyo id está entre start_id y end_id (inclusive).
+    Devuelve una cantidad específica de registros a partir de un ID inicial.
+    - start_id: ID del registro desde donde comenzar
+    - limit: Cantidad de registros a recuperar (mínimo 1, sin límite máximo)
     """
     try:
-        resp = supabase.table('documents').select('*').gte('id', start_id).lte('id', end_id).order('id', desc=False).execute()
-        return {'documents_range': resp.data}
+        resp = supabase.table('documents').select('*').gte('id', start_id).order('id', desc=False).limit(limit).execute()
+        return {'documents_range': resp.data, 'start_id': start_id, 'limit': limit, 'count': len(resp.data)}
     except Exception as e:
         app_logger.error(f"Error fetching documents range: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
