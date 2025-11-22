@@ -6,7 +6,8 @@ from huggingface_hub import InferenceClient
 from constants import MODEL_NAME
 
 """
-La función get_embeddings_from_hf se invoca desde el archivo main.py en varios endpoints de la API FastAPI:
+La función get_embeddings_from_hf se invoca desde el archivo main.py en varios endpoints de la API 
+FastAPI:
 Endpoint /health: Se usa para verificar la salud del modelo con un texto de prueba simple (["test"]).
 Endpoint /embedding: Para generar un embedding de UN SOLO texto proporcionado por el usuario.
 Endpoint /embeddings: Para generar embeddings de UNA LISTA de textos enviados en la solicitud.
