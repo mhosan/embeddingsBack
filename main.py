@@ -27,6 +27,7 @@ app = FastAPI()
 origins = [
     "https://geoofertas.com.ar",
     "https://www.geoofertas.com.ar",
+    "https://mhtest.alwaysdata.net",
     "https://mhtest.alwaysdata.net/embeddings/",
     "https://www.mhtest.alwaysdata.net/embeddings/",
     "https://udp.com.ar",
