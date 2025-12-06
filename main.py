@@ -3,7 +3,8 @@ from fastapi import FastAPI, HTTPException, logger, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from schemas import Contact, TextRequest, EmbeddingResponse, DocumentRecord
 from constants import MODEL_NAME, MODEL_DIMENSIONS, MAX_SEQUENCE_LENGTH, MODEL_DESCRIPTION, MODEL_USE_CASE, MODEL_LANGUAGE
-from database import supabase
+from database import get_db_connection, execute_query
+from psycopg2.extras import Json
 from datetime import datetime
 
 # ============================================
@@ -127,17 +128,22 @@ def create_single_embedding(text: str):
         embeddings = get_embeddings_from_hf([text.strip()])
 
         # Guardar en Supabase
-        record = DocumentRecord(
-            content=text.strip(),
-            embedding=embeddings[0],
-            metadata={"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
-        )
+        # Guardar en base de datos
         try:
-            data_to_insert = record.dict(exclude={'id', 'source', 'created_at'})
-            response = supabase.table('documents').insert(data_to_insert).execute()
-            document_id = response.data[0]['id']
+            # Asumiendo tabla documents con columnas: content, embedding, metadata
+            query = """
+                INSERT INTO documents (content, embedding, metadata)
+                VALUES (%s, %s, %s)
+                RETURNING id
+            """
+            # Convertir embedding a lista si es numpy array, y psycopg2 maneja la lista como array o string segun adaptadores.
+            # Convertimos a string formato vector '[x,y,z]' para asegurar compatibilidad con pgvector si no hay adaptador.
+            embedding_str = str(embeddings[0])
+            
+            result = execute_query(query, (text.strip(), embedding_str, Json({"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()})), fetch_one=True)
+            document_id = result['id']
         except Exception as e:
-            app_logger.error(f"Error saving to Supabase: {str(e)}")
+            app_logger.error(f"Error saving to Database: {str(e)}")
             raise HTTPException(status_code=500, detail="Failed to save document")
 
         return {
@@ -183,20 +189,32 @@ def create_embeddings(request: TextRequest):
         embeddings = get_embeddings_from_hf(request.texts)
 
         # Guardar en Supabase
+        # Guardar en base de datos
         document_ids = []
-        for i, emb in enumerate(embeddings):
-            record = DocumentRecord(
-                content=request.texts[i],
-                embedding=emb,
-                metadata={"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
-            )
-            try:
-                data_to_insert = record.dict(exclude={'id', 'source', 'created_at'})
-                response = supabase.table('documents').insert(data_to_insert).execute()
-                document_ids.append(response.data[0]['id'])
-            except Exception as e:
-                app_logger.error(f"Error saving document {i} to Supabase: {str(e)}")
-                document_ids.append(None)  # O manejar de otra forma
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    for i, emb in enumerate(embeddings):
+                        query = """
+                            INSERT INTO documents (content, embedding, metadata)
+                            VALUES (%s, %s, %s)
+                            RETURNING id
+                        """
+                        cur.execute(query, (
+                            request.texts[i], 
+                            str(emb), 
+                            Json({"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()})
+                        ))
+                        # Fetch result
+                        res = cur.fetchone()
+                        if res:
+                            document_ids.append(res['id'])
+                        else:
+                            document_ids.append(None)
+        except Exception as e:
+            app_logger.error(f"Error saving documents batch: {str(e)}")
+            # En caso de error masivo, podriamos lanzar excepcion o retornar lo que se pudo
+            raise HTTPException(status_code=500, detail=f"Failed to save documents: {str(e)}")
 
         return JSONResponse(content={"message": "Embeddings created",
                                      "model": MODEL_NAME,
@@ -262,21 +280,20 @@ def documents_info():
     """
     try:
         # Obtener cantidad de registros (count exacto)
-        count_resp = supabase.table('documents').select('*', count='exact').limit(1).execute()
-        total_count = getattr(count_resp, 'count', None)
-
-        # Obtener el registro con la fecha más antigua
-        earliest_resp = supabase.table('documents').select('created_at').order('created_at', desc=False).limit(1).execute()
-        earliest = earliest_resp.data[0]['created_at'] if earliest_resp.data else None
-
-        # Obtener el registro con la fecha más reciente
-        latest_resp = supabase.table('documents').select('created_at').order('created_at', desc=True).limit(1).execute()
-        latest = latest_resp.data[0]['created_at'] if latest_resp.data else None
+        # Obtener métricas
+        query = """
+            SELECT 
+                COUNT(*) as count,
+                MIN(created_at) as earliest_created_at,
+                MAX(created_at) as latest_created_at
+            FROM documents
+        """
+        data = execute_query(query, fetch_one=True)
 
         return {
-            'count': total_count,
-            'earliest_created_at': earliest,
-            'latest_created_at': latest
+            'count': data['count'],
+            'earliest_created_at': data['earliest_created_at'],
+            'latest_created_at': data['latest_created_at']
         }
     except Exception as e:
         app_logger.error(f"Error fetching documents info: {str(e)}")
@@ -294,8 +311,9 @@ def documents_latest(n: int = Query(5, ge=1)):
     - n: cantidad de registros a devolver (default 5, sin límite máximo)
     """
     try:
-        resp = supabase.table('documents').select('*').order('created_at', desc=True).limit(n).execute()
-        return {'latest_documents': resp.data}
+        query = "SELECT * FROM documents ORDER BY created_at DESC LIMIT %s"
+        data = execute_query(query, (n,), fetch_all=True)
+        return {'latest_documents': data}
     except Exception as e:
         app_logger.error(f"Error fetching latest documents: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -310,8 +328,9 @@ def documents_earliest(n: int = Query(5, ge=1)):
     - n: cantidad de registros a devolver (default 5, sin límite máximo)
     """
     try:
-        resp = supabase.table('documents').select('*').order('created_at', desc=False).limit(n).execute()
-        return {'earliest_documents': resp.data}
+        query = "SELECT * FROM documents ORDER BY created_at ASC LIMIT %s"
+        data = execute_query(query, (n,), fetch_all=True)
+        return {'earliest_documents': data}
     except Exception as e:
         app_logger.error(f"Error fetching earliest documents: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -327,8 +346,9 @@ def delete_document(id: int = Path(..., description="ID del documento a borrar")
     Elimina un registro de la tabla documents por su id.
     """
     try:
-        resp = supabase.table('documents').delete().eq('id', id).execute()
-        if resp.data and len(resp.data) > 0:
+        query = "DELETE FROM documents WHERE id = %s RETURNING id"
+        data = execute_query(query, (id,), fetch_all=True)
+        if data and len(data) > 0:
             return {"deleted": True, "id": id}
         else:
             raise HTTPException(status_code=404, detail=f"Documento con id {id} no encontrado")
@@ -347,8 +367,9 @@ def documents_range(start_id: int = Query(..., description="ID del registro inic
     - limit: Cantidad de registros a recuperar (mínimo 1, sin límite máximo)
     """
     try:
-        resp = supabase.table('documents').select('*').gte('id', start_id).order('id', desc=False).limit(limit).execute()
-        return {'documents_range': resp.data, 'start_id': start_id, 'limit': limit, 'count': len(resp.data)}
+        query = "SELECT * FROM documents WHERE id >= %s ORDER BY id ASC LIMIT %s"
+        data = execute_query(query, (start_id, limit), fetch_all=True)
+        return {'documents_range': data, 'start_id': start_id, 'limit': limit, 'count': len(data)}
     except Exception as e:
         app_logger.error(f"Error fetching documents range: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
