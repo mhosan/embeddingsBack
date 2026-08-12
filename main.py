@@ -25,10 +25,7 @@ app = FastAPI()
 # CONFIGURAR CORS
 # ===========================================
 origins = [
-    "https://geoofertas.com.ar",
-    "https://www.geoofertas.com.ar",
-    "https://udp.com.ar",
-    "https://www.udp.com.ar"
+    "https://embeddings-back.vercel.app",
     "http://localhost",
     "http://localhost:8080",
 ]
