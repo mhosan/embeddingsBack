@@ -25,10 +25,11 @@ app = FastAPI()
 # CONFIGURAR CORS
 # ===========================================
 origins = [
-    "https://mhosan.github.io/embeddings-front/",
+    "https://mhosan.github.io/embeddings-front",
     "https://www.mhosan.github.io/embeddings-front",
     "http://localhost",
     "http://localhost:8080",
+    "http://localhost:4200"
 ]
 
 app.add_middleware(
