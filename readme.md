@@ -1,6 +1,6 @@
 
 ## Limitaciones a considerar:
-
+El deploy en Vercel es automatico, lo toma del repositorio de Github al hacer el push.
 Rate limits: 1000 requests/hora en tier gratuito
 Cold start: Primeras requests pueden ser lentas
 Dependencia externa: Requiere conexión a internet

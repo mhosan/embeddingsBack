@@ -25,7 +25,8 @@ app = FastAPI()
 # CONFIGURAR CORS
 # ===========================================
 origins = [
-    "https://embeddings-back.vercel.app",
+    "https://mhosan.github.io/embeddings-front/",
+    "https://www.mhosan.github.io/embeddings-front",
     "http://localhost",
     "http://localhost:8080",
 ]
