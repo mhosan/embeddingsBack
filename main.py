@@ -279,7 +279,10 @@ def documents_info():
             'latest_created_at': latest
         }
     except Exception as e:
-        app_logger.error(f"Error fetching documents info: {str(e)}")
+        import traceback
+        tb = traceback.format_exc()
+        app_logger.error(f"Error fetching documents info: {str(e)}\n{tb}")
+        print(f"TRACEBACK ERROR: {tb}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # ============================================
