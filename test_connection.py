@@ -1,19 +1,16 @@
-from supabase import create_client
 import os
 from dotenv import load_dotenv
+from database import get_connection
 
 load_dotenv()
 
-# Conectar
-supabase = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
-)
-
-# Probar con una consulta simple
+# Probar conexion a Neon
 try:
-    response = supabase.table('documents').select("*").limit(1).execute()
-    print("✅ Conexión exitosa")
-    print(f"Datos obtenidos: {response.data}")
+    conn = get_connection()
+    with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) AS total FROM documents;")
+        row = cur.fetchone()
+        print(f"[OK] Conexion a Neon exitosa. Total de documentos: {row['total']}")
+    conn.close()
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f"[ERROR] al conectar a Neon: {e}")

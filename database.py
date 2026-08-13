@@ -1,35 +1,53 @@
 import os
+import re
+import psycopg2
+import psycopg2.extras
 from dotenv import load_dotenv
-from supabase import create_client, Client, ClientOptions
 
 # Cargar variables de entorno
 load_dotenv()
 
-class SupabaseProxy:
+def _sanitize_neon_url(url: str) -> str:
     """
-    Proxy dinamico para crear una instancia nueva de Supabase Client en cada llamada.
-    Esto evita el error '[Errno 16] Device or resource busy' causado por el cliente HTTP (httpx)
-    reutilizando sockets congelados/bloqueados en el entorno Serverless de Vercel.
+    Limpia la URL de conexion de Neon para compatibilidad con psycopg2:
+    - Elimina channel_binding (no soportado por psycopg2 < 2.9.5 / libpq antiguo)
+    - Elimina el sufijo -pooler del host (el pooler de Neon es para drivers async/serverless;
+      psycopg2 sincrono funciona mejor con la conexion directa)
+    - Asegura sslmode=require
     """
-    @staticmethod
-    def _get_client() -> Client:
-        supabase_url = os.getenv("SUPABASE_URL")
-        supabase_key = os.getenv("SUPABASE_KEY")
-        if not supabase_url or not supabase_key:
-            print(f"ERROR CONFIG: Missing Supabase Env Vars -> URL: {bool(supabase_url)}, KEY: {bool(supabase_key)}")
-        return create_client(
-            supabase_url or "",
-            supabase_key or "",
-            options=ClientOptions(
-                persist_session=False
-            )
-        )
+    if not url:
+        return url
 
-    def __getattr__(self, name):
-        client = self._get_client()
-        return getattr(client, name)
+    # Quitar channel_binding
+    url = re.sub(r'[&?]channel_binding=[^&]*', '', url)
 
-# Instancia global exportada del Proxy
-supabase = SupabaseProxy()
+    # Quitar -pooler del host (ej: ep-xxx-pooler.region -> ep-xxx.region)
+    url = re.sub(r'(ep-[^.]+)-pooler\.', r'\1.', url)
 
-print("Supabase Dynamic Proxy inicializado correctamente")
+    # Asegurar sslmode=require
+    if "sslmode" not in url:
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}sslmode=require"
+
+    return url
+
+def get_connection():
+    """
+    Crea y retorna una nueva conexion a la base de datos Neon (PostgreSQL).
+    Cada llamada genera una conexion fresca para evitar problemas de sockets
+    congelados en entornos serverless (Vercel, AlwaysData, etc.).
+    """
+    raw_url = os.getenv("DATABASE_URL")
+    if not raw_url:
+        raise RuntimeError("ERROR CONFIG: La variable de entorno DATABASE_URL no esta definida.")
+
+    database_url = _sanitize_neon_url(raw_url)
+
+    conn = psycopg2.connect(
+        database_url,
+        cursor_factory=psycopg2.extras.RealDictCursor,
+        connect_timeout=10
+    )
+    return conn
+
+print("Neon DB: modulo de conexion inicializado correctamente")

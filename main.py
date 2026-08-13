@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, logger, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from schemas import Contact, TextRequest, EmbeddingResponse, DocumentRecord
 from constants import MODEL_NAME, MODEL_DIMENSIONS, MAX_SEQUENCE_LENGTH, MODEL_DESCRIPTION, MODEL_USE_CASE, MODEL_LANGUAGE
-from database import supabase
+from database import get_connection
 from datetime import datetime
 
 # ============================================
@@ -128,18 +128,23 @@ def create_single_embedding(text: str):
         
         embeddings = get_embeddings_from_hf([text.strip()])
 
-        # Guardar en Supabase
-        record = DocumentRecord(
-            content=text.strip(),
-            embedding=embeddings[0],
-            metadata={"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
-        )
+        # Guardar en Neon
+        embedding_str = "[" + ",".join(str(x) for x in embeddings[0]) + "]"
+        metadata = {"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
         try:
-            data_to_insert = record.dict(exclude={'id', 'source', 'created_at'})
-            response = supabase.table('documents').insert(data_to_insert).execute()
-            document_id = response.data[0]['id']
+            conn = get_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO documents (content, embedding, metadata) VALUES (%s, %s::vector, %s) RETURNING id;",
+                        (text.strip(), embedding_str, str(metadata))
+                    )
+                    document_id = cur.fetchone()['id']
+                conn.commit()
+            finally:
+                conn.close()
         except Exception as e:
-            app_logger.error(f"Error saving to Supabase: {str(e)}")
+            app_logger.error(f"Error saving to Neon: {str(e)}")
             raise HTTPException(status_code=500, detail="Failed to save document")
 
         return {
@@ -184,21 +189,26 @@ def create_embeddings(request: TextRequest):
 
         embeddings = get_embeddings_from_hf(request.texts)
 
-        # Guardar en Supabase
+        # Guardar en Neon
         document_ids = []
-        for i, emb in enumerate(embeddings):
-            record = DocumentRecord(
-                content=request.texts[i],
-                embedding=emb,
-                metadata={"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
-            )
-            try:
-                data_to_insert = record.dict(exclude={'id', 'source', 'created_at'})
-                response = supabase.table('documents').insert(data_to_insert).execute()
-                document_ids.append(response.data[0]['id'])
-            except Exception as e:
-                app_logger.error(f"Error saving document {i} to Supabase: {str(e)}")
-                document_ids.append(None)  # O manejar de otra forma
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                for i, emb in enumerate(embeddings):
+                    embedding_str = "[" + ",".join(str(x) for x in emb) + "]"
+                    metadata = {"model": MODEL_NAME, "timestamp": datetime.utcnow().isoformat()}
+                    try:
+                        cur.execute(
+                            "INSERT INTO documents (content, embedding, metadata) VALUES (%s, %s::vector, %s) RETURNING id;",
+                            (request.texts[i], embedding_str, str(metadata))
+                        )
+                        document_ids.append(cur.fetchone()['id'])
+                    except Exception as e:
+                        app_logger.error(f"Error saving document {i} to Neon: {str(e)}")
+                        document_ids.append(None)
+            conn.commit()
+        finally:
+            conn.close()
 
         return JSONResponse(content={"message": "Embeddings created",
                                      "model": MODEL_NAME,
@@ -263,17 +273,24 @@ def documents_info():
     Nota: Implementación mínima usando el cliente `supabase` ya presente en el proyecto.
     """
     try:
-        # Obtener cantidad de registros (count exacto)
-        count_resp = supabase.table('documents').select('*', count='exact').limit(1).execute()
-        total_count = getattr(count_resp, 'count', None)
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Cantidad total de registros
+                cur.execute("SELECT COUNT(*) AS total FROM documents;")
+                total_count = cur.fetchone()['total']
 
-        # Obtener el registro con la fecha más antigua
-        earliest_resp = supabase.table('documents').select('created_at').order('created_at', desc=False).limit(1).execute()
-        earliest = earliest_resp.data[0]['created_at'] if earliest_resp.data else None
+                # Fecha del registro más antiguo
+                cur.execute("SELECT created_at FROM documents ORDER BY created_at ASC LIMIT 1;")
+                row = cur.fetchone()
+                earliest = str(row['created_at']) if row else None
 
-        # Obtener el registro con la fecha más reciente
-        latest_resp = supabase.table('documents').select('created_at').order('created_at', desc=True).limit(1).execute()
-        latest = latest_resp.data[0]['created_at'] if latest_resp.data else None
+                # Fecha del registro más reciente
+                cur.execute("SELECT created_at FROM documents ORDER BY created_at DESC LIMIT 1;")
+                row = cur.fetchone()
+                latest = str(row['created_at']) if row else None
+        finally:
+            conn.close()
 
         return {
             'count': total_count,
@@ -299,8 +316,14 @@ def documents_latest(n: int = Query(5, ge=1)):
     - n: cantidad de registros a devolver (default 5, sin límite máximo)
     """
     try:
-        resp = supabase.table('documents').select('*').order('created_at', desc=True).limit(n).execute()
-        return {'latest_documents': resp.data}
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, content, metadata, created_at FROM documents ORDER BY created_at DESC LIMIT %s;", (n,))
+                rows = [dict(r) for r in cur.fetchall()]
+        finally:
+            conn.close()
+        return {'latest_documents': rows}
     except Exception as e:
         app_logger.error(f"Error fetching latest documents: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -315,8 +338,14 @@ def documents_earliest(n: int = Query(5, ge=1)):
     - n: cantidad de registros a devolver (default 5, sin límite máximo)
     """
     try:
-        resp = supabase.table('documents').select('*').order('created_at', desc=False).limit(n).execute()
-        return {'earliest_documents': resp.data}
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, content, metadata, created_at FROM documents ORDER BY created_at ASC LIMIT %s;", (n,))
+                rows = [dict(r) for r in cur.fetchall()]
+        finally:
+            conn.close()
+        return {'earliest_documents': rows}
     except Exception as e:
         app_logger.error(f"Error fetching earliest documents: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -332,11 +361,20 @@ def delete_document(id: int = Path(..., description="ID del documento a borrar")
     Elimina un registro de la tabla documents por su id.
     """
     try:
-        resp = supabase.table('documents').delete().eq('id', id).execute()
-        if resp.data and len(resp.data) > 0:
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM documents WHERE id = %s RETURNING id;", (id,))
+                deleted_row = cur.fetchone()
+            conn.commit()
+        finally:
+            conn.close()
+        if deleted_row:
             return {"deleted": True, "id": id}
         else:
             raise HTTPException(status_code=404, detail=f"Documento con id {id} no encontrado")
+    except HTTPException:
+        raise
     except Exception as e:
         app_logger.error(f"Error deleting document: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -352,8 +390,17 @@ def documents_range(start_id: int = Query(..., description="ID del registro inic
     - limit: Cantidad de registros a recuperar (mínimo 1, sin límite máximo)
     """
     try:
-        resp = supabase.table('documents').select('*').gte('id', start_id).order('id', desc=False).limit(limit).execute()
-        return {'documents_range': resp.data, 'start_id': start_id, 'limit': limit, 'count': len(resp.data)}
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT id, content, metadata, created_at FROM documents WHERE id >= %s ORDER BY id ASC LIMIT %s;",
+                    (start_id, limit)
+                )
+                rows = [dict(r) for r in cur.fetchall()]
+        finally:
+            conn.close()
+        return {'documents_range': rows, 'start_id': start_id, 'limit': limit, 'count': len(rows)}
     except Exception as e:
         app_logger.error(f"Error fetching documents range: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

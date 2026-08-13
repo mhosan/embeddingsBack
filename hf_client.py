@@ -36,15 +36,15 @@ if not HF_TOKEN:
     raise ValueError("HF_TOKEN environment variable is required")
 
 app_logger.info(f"HF Token loaded: {HF_TOKEN[:10]}..." if HF_TOKEN else "No token")
-print(f"✓ HF Token cargado correctamente")
-print(f"✓ Modelo: {MODEL_NAME}")
+print(f"[OK] HF Token cargado correctamente")
+print(f"[OK] Modelo: {MODEL_NAME}")
 
 # Inicializar InferenceClient
 try:
     client = InferenceClient(api_key=HF_TOKEN)
-    print(f"✓ InferenceClient inicializado correctamente")
+    print(f"[OK] InferenceClient inicializado correctamente")
 except Exception as e:
-    print(f"✗ Error inicializando InferenceClient: {str(e)}")
+    print(f"[ERROR] Error inicializando InferenceClient: {str(e)}")
     raise
 
 
