@@ -33,7 +33,9 @@ origins = [
     "https://mhosan.github.io/embeddings-front/",
     "http://localhost",
     "http://localhost:8080",
-    "http://localhost:4200"
+    "http://localhost:4200",
+    "https://mhtest.alwaysdata.net/embeddings/",
+    "https://mhtest.alwaysdata.net/embeddings"
 ]
 
 app.add_middleware(

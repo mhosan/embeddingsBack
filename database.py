@@ -1,4 +1,3 @@
-# config.py
 import os
 from dotenv import load_dotenv
 from supabase import create_client, Client, ClientOptions
@@ -6,19 +5,31 @@ from supabase import create_client, Client, ClientOptions
 # Cargar variables de entorno
 load_dotenv()
 
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
+class SupabaseProxy:
+    """
+    Proxy dinamico para crear una instancia nueva de Supabase Client en cada llamada.
+    Esto evita el error '[Errno 16] Device or resource busy' causado por el cliente HTTP (httpx)
+    reutilizando sockets congelados/bloqueados en el entorno Serverless de Vercel.
+    """
+    @staticmethod
+    def _get_client() -> Client:
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_KEY")
+        if not supabase_url or not supabase_key:
+            print(f"ERROR CONFIG: Missing Supabase Env Vars -> URL: {bool(supabase_url)}, KEY: {bool(supabase_key)}")
+        return create_client(
+            supabase_url or "",
+            supabase_key or "",
+            options=ClientOptions(
+                persist_session=False
+            )
+        )
 
-if not supabase_url or not supabase_key:
-    print(f"ERROR CONFIG: Missing Supabase Env Vars -> URL: {bool(supabase_url)}, KEY: {bool(supabase_key)}")
+    def __getattr__(self, name):
+        client = self._get_client()
+        return getattr(client, name)
 
-# Crear cliente desactivando la persistencia de sesión local para evitar errores de bloqueo de archivos en Vercel Serverless
-supabase: Client = create_client(
-    supabase_url or "",
-    supabase_key or "",
-    options=ClientOptions(
-        persist_session=False
-    )
-)
+# Instancia global exportada del Proxy
+supabase = SupabaseProxy()
 
-print(f"Conexion iniciada a Supabase (URL: {supabase_url[:15] if supabase_url else 'None'}...)")
+print("Supabase Dynamic Proxy inicializado correctamente")
