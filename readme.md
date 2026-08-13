@@ -1,9 +1,8 @@
 
 ## Limitaciones a considerar:
-El deploy en Vercel es automatico, lo toma del repositorio de Github al hacer el push.
-Rate limits: 1000 requests/hora en tier gratuito
-Cold start: Primeras requests pueden ser lentas
-Dependencia externa: Requiere conexión a internet
+El deploy en Vercel es automatico, lo toma del repositorio de Github al hacer el push.Para ejecutar en local usar: python3 -m uvicorn main:app --reload --port 5000
+
+Se está usando la base de datos Neon para guardar los embeddings y el modelo. El modelo en cuestion es el bge-base-en-v1.5 de HuggingFace. 
 
 ## Recomendación para cada caso:
 **Usar HF Inference API cuando:**

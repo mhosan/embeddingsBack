@@ -1,4 +1,5 @@
 import logging
+import json
 from fastapi import FastAPI, HTTPException, logger, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from schemas import Contact, TextRequest, EmbeddingResponse, DocumentRecord
@@ -137,7 +138,7 @@ def create_single_embedding(text: str):
                 with conn.cursor() as cur:
                     cur.execute(
                         "INSERT INTO documents (content, embedding, metadata) VALUES (%s, %s::vector, %s) RETURNING id;",
-                        (text.strip(), embedding_str, str(metadata))
+                        (text.strip(), embedding_str, json.dumps(metadata))
                     )
                     document_id = cur.fetchone()['id']
                 conn.commit()
@@ -145,7 +146,7 @@ def create_single_embedding(text: str):
                 conn.close()
         except Exception as e:
             app_logger.error(f"Error saving to Neon: {str(e)}")
-            raise HTTPException(status_code=500, detail="Failed to save document")
+            raise HTTPException(status_code=500, detail=f"Failed to save document: {str(e)}")
 
         return {
             "embedding": embeddings[0] if embeddings else [],
@@ -200,7 +201,7 @@ def create_embeddings(request: TextRequest):
                     try:
                         cur.execute(
                             "INSERT INTO documents (content, embedding, metadata) VALUES (%s, %s::vector, %s) RETURNING id;",
-                            (request.texts[i], embedding_str, str(metadata))
+                            (request.texts[i], embedding_str, json.dumps(metadata))
                         )
                         document_ids.append(cur.fetchone()['id'])
                     except Exception as e:

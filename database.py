@@ -11,8 +11,6 @@ def _sanitize_neon_url(url: str) -> str:
     """
     Limpia la URL de conexion de Neon para compatibilidad con psycopg2:
     - Elimina channel_binding (no soportado por psycopg2 < 2.9.5 / libpq antiguo)
-    - Elimina el sufijo -pooler del host (el pooler de Neon es para drivers async/serverless;
-      psycopg2 sincrono funciona mejor con la conexion directa)
     - Asegura sslmode=require
     """
     if not url:
@@ -20,9 +18,6 @@ def _sanitize_neon_url(url: str) -> str:
 
     # Quitar channel_binding
     url = re.sub(r'[&?]channel_binding=[^&]*', '', url)
-
-    # Quitar -pooler del host (ej: ep-xxx-pooler.region -> ep-xxx.region)
-    url = re.sub(r'(ep-[^.]+)-pooler\.', r'\1.', url)
 
     # Asegurar sslmode=require
     if "sslmode" not in url:
